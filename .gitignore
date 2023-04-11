@@ -48,3 +48,8 @@ Thumbs.db
 *.mov
 *.wmv
 
+/Rover/running_images/
+/Rover.egg-info/
+/build/
+/dist/
+/.idea/
