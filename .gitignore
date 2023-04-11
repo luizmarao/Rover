@@ -50,6 +50,6 @@ Thumbs.db
 
 /Rover/running_images/
 /Rover.egg-info/
-/build/
 /dist/
 /.idea/
+/build/
