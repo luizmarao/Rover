@@ -246,10 +246,10 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
         observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(np.product(self.img_reduced_size)+14,), dtype=np.float64)
         if self.random_current_goal:
             self.randomize_current_goal()
-
+        model_path = os.path.join(os.path.dirname(__file__),'assets','Rover4We-v1')
         MujocoEnv.__init__(
             self,
-            'Rover4We-v1/main-trekking-challenge-4wheels_diff-acker-double-front-wheel.xml',
+            os.path.join(model_path, 'main-trekking-challenge-4wheels_diff-acker-double-front-wheel.xml'),
             4,
             observation_space=observation_space,
             **kwargs,
