@@ -1,0 +1,184 @@
+<!-- ======================================================
+	Model 		:: Bump for Robot Trekking (2016)
+		
+	Mujoco		:: Advanced physics simulation engine
+	Version		:: 0.1
+====================================================== -->
+<mujoco model="circular bump (v0.1)">
+    <compiler inertiafromgeom="true" angle="degree"/>
+	<option	timestep="0.01" gravity="0 0 -9.81"/>
+	
+	<asset>
+		<!--material name="MatGnd" specular="1" shininess=".3" reflectance="0" rgba="1 1 1 1" texture="PixelGround" /-->
+		<!--material name="MatSpot" specular="1" shininess="0" reflectance="0.5" rgba="1 1 1 1"/-->
+		<!--material name="MatInit" rgba=".8 0 0 1"/-->
+	</asset>
+	
+	<default>
+		<geom contype="1" conaffinity="1"/>
+	</default>
+	
+    <worldbody>	
+		<body name="circ-bump1" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+		<body name="circ-bump2" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+		<body name="circ-bump3" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+		<body name="circ-bump4" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+		<body name="circ-bump5" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+		<body name="circ-bump6" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+		<body name="circ-bump7" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+		<body name="circ-bump8" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+		<body name="circ-bump9" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+		<body name="circ-bump10" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+		<body name="circ-bump11" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+		<body name="circ-bump12" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+		<body name="circ-bump13" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+		<body name="circ-bump14" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+		<body name="circ-bump15" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump16" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump17" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump18" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump19" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump20" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump21" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump22" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump23" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump24" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump25" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump26" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump27" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump28" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump29" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump30" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump31" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump32" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump33" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump34" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>
+        <body name="circ-bump35" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump36" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump37" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump38" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump39" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        <body name="circ-bump40" pos="5 5 -10">
+			<geom type="ellipsoid" pos="0 0 -.075" size=".5 .5 .15" rgba="1 0 0 1"/>
+			<geom type="box" size=".5 .5 .1" pos = "0 0 -.1" rgba="0 1 0 1"/>
+		</body>	
+        
+	</worldbody>
+</mujoco>

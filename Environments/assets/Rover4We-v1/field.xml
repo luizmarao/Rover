@@ -1,0 +1,68 @@
+<!-- ======================================================
+	Model 		:: Field for Robot Trekking (2016)
+		
+	Mujoco		:: Advanced physics simulation engine
+	Version		:: 2.0
+====================================================== -->
+<mujoco model="field (v2.0)">
+    <compiler inertiafromgeom="true" angle="degree"/>
+	<option	timestep="0.02" gravity="0 0 -9.81"/>
+	
+	<asset>
+		<!--texture type ="2d" name="PixelGround" file="texture3_field.png"/-->
+		<material name="MatGnd" specular="1" shininess=".3" reflectance="0" rgba="0 1 0 1" />
+		<!--material name="MatGnd" specular="1" shininess=".3" reflectance="0" rgba="0 1 0 1" texture="PixelGround" /-->
+		<material name="MatSpot" specular="1" shininess="0" reflectance="0.5" rgba="1 1 1 1"/>
+		<material name="MatInit" rgba="0.8 0 0 1"/>
+
+	</asset>
+	
+	<default>
+		<geom contype="1" conaffinity="1"/>
+		<mesh scale="1 1 1"/>
+	</default>
+	
+    <worldbody>
+		<camera name="overview" mode="fixed" pos="22 12.5 35"/>
+		<light directional="true" cutoff="4" exponent="20" diffuse="1 1 1" specular="0 0 0" pos="0 .3 2.5" dir="0 -.3 -2.5 "/>
+		<geom name="ground1" type="box" pos="5.5 2.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
+		<geom name="ground2" type="box" pos="5.5 7.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
+		<geom name="ground3" type="box" pos="5.5 12.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
+		<geom name="ground4" type="box" pos="5.5 17.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
+		<geom name="ground5" type="box" pos="5.5 22.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
+		<geom name="ground6" type="box" pos="16.5 2.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
+		<geom name="ground7" type="box" pos="16.5 7.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
+		<geom name="ground8" type="box" pos="16.5 17.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
+		<geom name="ground9" type="box" pos="16.5 22.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
+		<geom name="ground10" type="box" pos="27.5 2.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
+		<geom name="ground11" type="box" pos="27.5 12.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
+		<geom name="ground12" type="box" pos="27.5 22.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
+		<geom name="ground13" type="box" pos="38.5 2.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
+		<geom name="ground14" type="box" pos="38.5 7.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
+		<geom name="ground15" type="box" pos="38.5 17.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
+		<geom name="ground16" type="box" pos="38.5 22.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
+		<geom name="init" type="plane" pos="3 3 .001" size=".5 .5 .1" conaffinity="0" contype="0" material="MatInit"/>
+		<geom name="spot-0" type="box" pos="6 18 .001" size=".5 .5 .001" material="MatSpot"/>
+		<geom name="spot-1" type="box" pos="30 2 .001" size=".5 .5 .001" material="MatSpot"/>
+		<geom name="spot-2" type="box" pos="40 20 .001" size=".5 .5 .001" material="MatSpot"/>
+		<body name="hole_filler1" pos="0 0 -10">
+			<geom type="box" pos="5 2 -0.5" size="5.5 2.5 .5" material="MatGnd"/>
+		</body>
+		<body name="hole_filler2" pos="0 0 -10">
+			<geom type="box" pos="5 2 -0.5" size="5.5 2.5 .5" material="MatGnd"/>
+		</body>
+        <body name="hole_filler3" pos="0 0 -10">
+			<geom type="box" pos="5 2 -0.5" size="5.5 2.5 .5" material="MatGnd"/>
+		</body>
+        <body name="hole_filler4" pos="0 0 -10">
+			<geom type="box" pos="5 2 -0.5" size="5.5 2.5 .5" material="MatGnd"/>
+		</body>
+	</worldbody>
+	<include file="ramp.xml"/>
+	<include file="box-tile.xml"/>
+	<include file="square-hole.xml"/>
+	<include file="square-long-hole.xml"/>
+	<include file="circular-bump.xml"/>
+	<include file="long-bump.xml"/>
+	<include file="post.xml"/>
+</mujoco>

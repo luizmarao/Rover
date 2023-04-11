@@ -1,0 +1,13 @@
+<!-- ======================================================
+	Model 		:: Rover for Robot Trekking (2016)
+		
+	Mujoco		:: Advanced physics simulation engine
+	Version		:: 0.1
+====================================================== -->
+<mujoco model="field (v0.1)">
+
+	<include file="rover-4-wheels.xml"/>
+	<worldbody>
+		<geom name="ground" type="plane" size="1 1 1" pos="3 3 0"/>
+	</worldbody>
+</mujoco>
