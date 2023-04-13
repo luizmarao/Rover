@@ -53,3 +53,4 @@ Thumbs.db
 /dist/
 /.idea/
 /build/
+*desktop.ini
