@@ -113,12 +113,14 @@ qvel[13]= front right wheel rolling angular velocity
 
 import numpy as np
 import cv2
+import gymnasium
 from gymnasium import utils
 from gymnasium.envs.mujoco import MujocoEnv
 from gymnasium import spaces
 #import matplotlib.pyplot as plt
 import mujoco
 import os
+from typing import Optional, Union
 
 # O campo tem dimensoes (x,y)=(44,25) [metros]
 # É uma matriz (x,y) de (0,0) até (3, 4) elementos, em que cada elemento tem dimensão (x,y) de (44/4, 25/5) = (11.0 , 5.0) [metros]
@@ -678,8 +680,22 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
         self.last_15_time = 0
 
         obs = self.format_obs(ob, img)
-        return obs
+        return obs, dict(current_goal=self.current_goal)
 
+    def reset(
+        self,
+        *,
+        seed: Optional[int] = None,
+        options: Optional[dict] = None,
+    ):
+        gymnasium.core.Env.reset(self, seed=seed)
+
+        self._reset_simulation()
+
+        ob, info = self.reset_model()
+        if self.render_mode == "human":
+            self.render()
+        return ob, info
     def map_generator(self):
         # distribute hole fillers in original field
         if self.original_field:
