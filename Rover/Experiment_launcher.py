@@ -4,22 +4,22 @@ from gymnasium import spaces
 import numpy as np
 import os
 
-from stable_baselines3 import PPO
-from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.logger import configure
-from Rover_customized_files.networks import RovernetClassic, save_current_network
-from Rover_customized_files.logger import configure
-
+from Rover.utils.env_util import make_vec_env
+from Rover.utils.networks import RovernetClassic, save_current_network
+from Rover.utils.logger import configure
+from Rover.utils.env_register import register_rover_environments
+from Rover.algos.ppo.ppo import PPO_Rover
 
 os.environ["MUJOCO_GL"] = 'egl'  # Set mujoco rendering to dedicated GPU
 EXPERIMENT_NAME = 'TestRoverSB3'
-os.environ["SB3_LOGDIR"] = os.path.expanduser('~/Python_Packages/rover_sb3/Experiments')
-
+os.environ["SB3_LOGDIR"] = os.path.join(os.path.dirname(__file__), 'Experiments')
+assert isinstance(os.environ["SB3_LOGDIR"], str)
+os.makedirs(os.environ["SB3_LOGDIR"], exist_ok=True)
 
 # set up logger
 logger = configure(folder=None, format_strings=["stdout", "csv", "tensorboard"], exp_name=EXPERIMENT_NAME)
 
-
+register_rover_environments()
 ## ENVIRONMENT PARAMETERS ##
 rover_env = "Rover4We-v1"
 img_red_size = (32, 32)
@@ -31,6 +31,7 @@ env_rendering_kwargs = {"render_mode": "rgb_array", "width": 440, "height": 270}
 start_at_initpos = False
 end_after_current_goal = True
 random_current_goal = True
+monitor_kwargs = dict(info_keywords=['death', 'goal_reached_flag', 'timeout'], reset_keywords=['current_goal'])
 
 ## NETWORK STRUCTURE PARAMETERS ##
 Networks_Architecture = RovernetClassic
@@ -50,11 +51,11 @@ normalize_images = False  # Already done in env
 
 ## PPO PARAMETERS ##
 total_learning_timesteps = 2e6
-n_steps = 2048  # for each env per update
+n_steps = 512  # for each env per update
 seed = None
 learning_rate = 0.0001
 gamma = 0.99
-n_epochs = 40  # networks training epochs
+n_epochs = 10  # networks training epochs
 gae_lambda = 0.95
 batch_size = 256  # was 64in default algo
 clip_range = 0.1  # was 0.3 in default algo
@@ -63,11 +64,12 @@ ent_coef = 0.0
 max_grad_norm = 1.0  # was 0.5 in default algo
 use_sde = False
 target_kl = 0.1  # was None in default algo
-stats_window_size = 100  # TODO: fix to use entire update data
+stats_window_size = 100
+clear_ep_info_buffer_every_iteration = True
 
 policy_kwargs = dict(
     features_extractor_class=Networks_Architecture,
-    #use_sde=use_sde,
+    # use_sde=use_sde,
     share_features_extractor=share_features_extractor,
     normalize_images=normalize_images,
     net_arch=net_arch,
@@ -81,37 +83,28 @@ policy_kwargs = dict(
     ),
 )
 
-envs = make_vec_env(rover_env, env_kwargs=env_rendering_kwargs, n_envs=num_environments)
-model = PPO("CnnPolicy", envs, policy_kwargs=policy_kwargs, verbose=1,
-            n_steps=n_steps,
-            learning_rate=learning_rate,
-            gamma=gamma,
-            n_epochs=n_epochs,
-            gae_lambda=gae_lambda,
-            batch_size=batch_size,
-            clip_range=clip_range,
-            normalize_advantage=normalize_advantage,
-            ent_coef=ent_coef,
-            max_grad_norm=max_grad_norm,
-            #use_sde=use_sde,
-            target_kl=target_kl,
-            seed=seed,
-            #stats_window_size=stats_window_size
-            )
+envs = make_vec_env(rover_env, env_kwargs=env_rendering_kwargs, n_envs=num_environments, monitor_kwargs=monitor_kwargs)
+model = PPO_Rover("CnnPolicy", envs, policy_kwargs=policy_kwargs, verbose=1,
+                  n_steps=n_steps,
+                  learning_rate=learning_rate,
+                  gamma=gamma,
+                  n_epochs=n_epochs,
+                  gae_lambda=gae_lambda,
+                  batch_size=batch_size,
+                  clip_range=clip_range,
+                  normalize_advantage=normalize_advantage,
+                  ent_coef=ent_coef,
+                  max_grad_norm=max_grad_norm,
+                  # use_sde=use_sde,
+                  target_kl=target_kl,
+                  seed=seed,
+                  # stats_window_size=stats_window_size
+                  clear_ep_info_buffer_every_iteration=clear_ep_info_buffer_every_iteration
+                  )
 model.set_logger(logger)
-# model.learn(total_timesteps=total_learning_timesteps, progress_bar=True)
+model.learn(total_timesteps=total_learning_timesteps, progress_bar=True)
 
 model.save_current_network = save_current_network
-model.save(path=logger.get_dir()+"saved_model", include=None, exclude=None)
+model.save(path=logger.get_dir() + "saved_model", include=None, exclude=None)
 
-loaded_model = PPO.load(path=logger.get_dir()+"saved_model")
-#
-# vec_env = model.get_env()
-# obs = vec_env.reset()
-
-# for i in range(1000):
-#     action, _states = model.predict(obs, deterministic=True)
-#     obs, reward, done, info = vec_env.step(action)
-#     vec_env.render()
-
-# obs, reward, terminated, truncated, info = env.step(env.action_space.sample())
+loaded_model = PPO_Rover.load(path=logger.get_dir() + "saved_model")
