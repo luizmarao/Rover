@@ -13,7 +13,8 @@ class RoverRankingSystem:
     :param verbose: 0 for no information, 1 for network leaves all rankings or first time it enters the rankings,
     2 for all times network leaves/enters a ranking
     '''
-    def __init__(self, model: PPO_Rover, networks_limit_per_ranking: int = 20, num_rankings: int = 3, save_path: str = None, networks_subfolder: str = 'saved_networks', verbose: int = 0):
+    def __init__(self, networks_limit_per_ranking: int = 20, num_rankings: int = 3,
+                 save_path: str = None, networks_subfolder: str = None, verbose: int = 0):
         self.num_rankings = num_rankings
         self.networks_limit_per_ranking = networks_limit_per_ranking
         self.rankings = [[] for i in range(num_rankings)]
