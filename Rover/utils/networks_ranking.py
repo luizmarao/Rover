@@ -6,6 +6,13 @@ from typing import List
 
 class RoverRankingSystem:
     '''
+    This class is responsible for ranking and organizing the networks of the experiment.
+    The comparison is made according the networks' performance values.
+    In the case of adding the network, it will be placed in the right position of the list, according to the
+    performance value.
+    At the end of the training, if the save_path is not None, a networks_rank.csv file will be generated with the
+    performance in each of the best networks. The networks will also be saved.
+
     :param num_rankings: amount of comparing criteria for the networks
     :param networks_limit_per_ranking: how many networks will be tracked per ranking
     :param save_path: if not None, will save the networks and the ranking at the given path
