@@ -244,7 +244,7 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
         "render_fps": 25,
     }
 
-    def __init__(self, **kwargs): #TODO corrigir shape do obs_space
+    def __init__(self, **kwargs):
         observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(np.product(self.img_reduced_size)+14,), dtype=np.float64)
         if self.random_current_goal:
             self.randomize_current_goal()
@@ -388,7 +388,7 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
             print(colorize("Left Camp", 'magenta', bold=True))
             r -= self.leave_penalty
             info['death'] = 1 # self kill
-        elif self.data.time >= 99.9: #TODO: Review time limit
+        elif self.data.time >= 99.9:
             terminated = True
             info['timeout'] = self.current_goal
             print(colorize("Out of Time", 'magenta', bold=True))
