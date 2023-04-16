@@ -1,5 +1,4 @@
 import numpy as np
-from Rover.algos.ppo.ppo import PPO_Rover
 import os
 from os import path as osp
 from typing import List
@@ -27,7 +26,6 @@ class RoverRankingSystem:
         self.rankings = [[] for i in range(num_rankings)]
         self.save_path = save_path
         self.networks_subfolder = networks_subfolder
-        self.model = model
         self.verbose = verbose
 
     class Network:
