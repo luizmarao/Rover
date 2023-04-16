@@ -49,6 +49,7 @@ Thumbs.db
 *.wmv
 
 /Rover/running_images/
+/Rover/Experiments/
 /Rover.egg-info/
 /dist/
 /.idea/
