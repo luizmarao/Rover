@@ -5,10 +5,11 @@ import numpy as np
 import os
 
 from Rover.utils.env_util import make_vec_env
-from Rover.utils.networks import RovernetClassic, save_current_network
+from Rover.utils.networks import RovernetClassic
 from Rover.utils.logger import configure
 from Rover.utils.env_register import register_rover_environments
 from Rover.algos.ppo.ppo import PPO_Rover
+from Rover.utils.networks_ranking import RoverRankingSystem
 
 os.environ["MUJOCO_GL"] = 'egl'  # Set mujoco rendering to dedicated GPU
 EXPERIMENT_NAME = 'TestRoverSB3'
@@ -101,10 +102,12 @@ model = PPO_Rover("CnnPolicy", envs, policy_kwargs=policy_kwargs, verbose=1,
                   # stats_window_size=stats_window_size
                   clear_ep_info_buffer_every_iteration=clear_ep_info_buffer_every_iteration
                   )
+rover_rankings = RoverRankingSystem(networks_limit_per_ranking=5, num_rankings=3,
+                                   save_path=logger.get_dir(), networks_subfolder='saved_networks', verbose=2)
+model.set_ranking_system(rover_rankings)
 model.set_logger(logger)
 model.learn(total_timesteps=total_learning_timesteps, progress_bar=True)
 
-model.save_current_network = save_current_network
-model.save(path=logger.get_dir() + "saved_model", include=None, exclude=None)
+model.save(path=os.path.join(logger.get_dir(), "saved_model"), include=None, exclude=None)
 
 loaded_model = PPO_Rover.load(path=logger.get_dir() + "saved_model")
