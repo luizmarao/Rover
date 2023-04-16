@@ -28,6 +28,7 @@ class RoverRankingSystem:
             self.performance_list = performance_list
             self.numlists = 0
     def rank_new_network(self, new_network: Network):
+        assert len(new_network.performance_list) == self.num_rankings, "Given network has {} performance parameters while ranking asks for {}".format(len(new_network.performance_list), self.num_rankings)
         ranks_changed = False
         for ranking in range(len(self.rankings)):
             len_list = len(self.rankings[ranking])
