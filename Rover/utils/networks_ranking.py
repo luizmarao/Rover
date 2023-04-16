@@ -68,11 +68,58 @@ class RoverRankingSystem:
                     if self.verbose >= 1:
                         print("Network {} left all rankings.".format(del_net.iteration))
                     if self.save_path is not None:  # Network's file must be removed
-                        print("Deleting saved network {}".format(del_net.numepoch))
-                        os.remove(osp.join(self.save_path, self.networks_subfolder, '%.5i' % del_net.numepoch))
-                if ranks_changed and self.save_path is not None:
-                    self.save_current_network()
-    def save_current_network(self):
-        pass  #TODO: implement networks saving function
+                        print("Deleting saved network {}".format(del_net.iteration))
+                        os.remove(osp.join(self.save_path, self.networks_subfolder, '%.5i.zip' % del_net.iteration))  #TODO: Fix in case of None for any arg in join
+        if ranks_changed and self.save_path is not None:
+            return True
+        else:
+            return False
+    def print_rankings(self):  # TODO: expand to variable num_rankings. Current == 3
+        print()
+        fmt_size = '{:>' + str(18) + '}'
+        descrip = ['', 'Non dying [%]', 'Avg/MEA [%]', 'Success [%]', '']
+        print(' |'.join([fmt_size.format(d) for d in descrip]))
+        print(fmt_size.format('Position') + ' |', end='')
+        print(' |'.join(['{:>9}{:>9}'.format('Perf', ' Iteration') for _ in self.rankings]), '|')
+
+        print((' ' * 10) + '-' * (4 * 18 - 3))
+
+        rankings_sizes = [len(r) for r in self.rankings]
+        for line_idx in range(np.max(rankings_sizes)):
+            print(fmt_size.format(line_idx + 1) + ' |', end='')
+            for rank_idx, rank in enumerate(self.rankings):
+                if line_idx < len(rank):
+                    print('{:>9.2f}{:>9}'.format(rank[line_idx].performance_list[rank_idx], rank[line_idx].iteration),
+                          end='')
+                else:
+                    print(fmt_size.format(''), end='')
+                print(' |', end='')
+            print()
+        print()
+
+    def write_ranking_files(self):  # TODO: expand to variable num_rankings. Current == 3
+        if self.save_path is not None:
+            ranking_file1 = open(osp.join(self.save_path, 'networks_ranking1.txt'), 'w')
+            ranking_file2 = open(osp.join(self.save_path, 'networks_ranking2.txt'), 'w')
+            ranking_file3 = open(osp.join(self.save_path, 'networks_ranking3.txt'), 'w')
+
+            ranking_file1.write('Non dying [%]\tIteration\n')
+            ranking_file2.write('Avg/MEA [%]\tIteration\n')
+            ranking_file3.write('Success [%]\tIteration\n')
+            rf = [ranking_file1, ranking_file2, ranking_file3]
+
+            rankings_sizes = [len(r) for r in self.rankings]
+            for line_idx in range(np.max(rankings_sizes)):
+                for rank_idx, rank in enumerate(self.rankings):
+                    if line_idx < len(rank):
+                        rf[rank_idx].write(
+                            '{:0.2f}\t{}\n'.format(rank[line_idx].performance_list[rank_idx], rank[line_idx].iteration))
+
+            ranking_file1.flush()
+            ranking_file1.close()
+            ranking_file2.flush()
+            ranking_file2.close()
+            ranking_file3.flush()
+            ranking_file3.close()
 
 
