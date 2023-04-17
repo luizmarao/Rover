@@ -1,3 +1,4 @@
+import os
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, TypeVar, Union
 import io
@@ -21,6 +22,8 @@ from stable_baselines3.common.utils import explained_variance, get_schedule_fn, 
 from Rover.utils.networks_ranking import RoverRankingSystem
 
 SelfPPO = TypeVar("SelfPPO", bound="PPO")
+
+
 class PPO_Rover(PPO):
     """
         Proximal Policy Optimization algorithm (PPO) (clip version)
@@ -96,7 +99,7 @@ class PPO_Rover(PPO):
             sde_sample_freq: int = -1,
             target_kl: Optional[float] = None,
             stats_window_size: int = 100,
-            clear_ep_info_buffer_every_iteration = True,
+            clear_ep_info_buffer_every_iteration=True,
             tensorboard_log: Optional[str] = None,
             policy_kwargs: Optional[Dict[str, Any]] = None,
             verbose: int = 0,
@@ -105,30 +108,30 @@ class PPO_Rover(PPO):
             _init_setup_model: bool = True,
     ):
         super().__init__(
-                policy,
-                env,
-                learning_rate,
-                n_steps,
-                batch_size,
-                n_epochs,
-                gamma,
-                gae_lambda,
-                clip_range,
-                clip_range_vf,
-                normalize_advantage,
-                ent_coef,
-                vf_coef,
-                max_grad_norm,
-                use_sde,
-                sde_sample_freq,
-                target_kl,
-                stats_window_size,
-                tensorboard_log,
-                policy_kwargs,
-                verbose,
-                seed,
-                device,
-                _init_setup_model,
+            policy,
+            env,
+            learning_rate,
+            n_steps,
+            batch_size,
+            n_epochs,
+            gamma,
+            gae_lambda,
+            clip_range,
+            clip_range_vf,
+            normalize_advantage,
+            ent_coef,
+            vf_coef,
+            max_grad_norm,
+            use_sde,
+            sde_sample_freq,
+            target_kl,
+            stats_window_size,
+            tensorboard_log,
+            policy_kwargs,
+            verbose,
+            seed,
+            device,
+            _init_setup_model,
         )
         self.clear_ep_info_buffer_every_iteration = clear_ep_info_buffer_every_iteration
         self.rover_rankings = None
@@ -158,8 +161,8 @@ class PPO_Rover(PPO):
             for rollout_data in self.rollout_buffer.get(self.batch_size):
                 actions = rollout_data.actions
                 # if isinstance(self.action_space, spaces.Discrete):
-                    # Convert discrete action from float to long
-                    # actions = rollout_data.actions.long().flatten()
+                # Convert discrete action from float to long
+                # actions = rollout_data.actions.long().flatten()
 
                 # Re-sample the noise matrix because the log_std has changed
                 if self.use_sde:
@@ -255,13 +258,13 @@ class PPO_Rover(PPO):
             self.logger.record("train/clip_range_vf", clip_range_vf)
 
     def learn(
-        self: SelfPPO,
-        total_timesteps: int,
-        callback: MaybeCallback = None,
-        log_interval: int = 1,
-        tb_log_name: str = "OnPolicyAlgorithm",
-        reset_num_timesteps: bool = True,
-        progress_bar: bool = False,
+            self: SelfPPO,
+            total_timesteps: int,
+            callback: MaybeCallback = None,
+            log_interval: int = 1,
+            tb_log_name: str = "OnPolicyAlgorithm",
+            reset_num_timesteps: bool = True,
+            progress_bar: bool = False,
     ) -> SelfPPO:
         iteration = 0
 
@@ -276,7 +279,9 @@ class PPO_Rover(PPO):
         callback.on_training_start(locals(), globals())
 
         while self.num_timesteps < total_timesteps:
-            continue_training = self.collect_rollouts(self.env, callback, self.rollout_buffer, n_rollout_steps=self.n_steps)
+            time_before_stepping = time.time_ns()
+            continue_training = self.collect_rollouts(self.env, callback, self.rollout_buffer,
+                                                      n_rollout_steps=self.n_steps)
 
             if continue_training is False:
                 break
@@ -285,7 +290,7 @@ class PPO_Rover(PPO):
             self._update_current_progress_remaining(self.num_timesteps, total_timesteps)
 
             # Personalized Rover info processing
-            minEpRet, maxEpRet, r, death_rate, avg_per_MEA, success_rate, goal_episodes, goal_reached_episodes  = self.eval_rover_performance()
+            minEpRet, maxEpRet, r, death_rate, avg_per_MEA, success_rate, goal_episodes, goal_reached_episodes = self.eval_rover_performance()
 
             # Display training infos
             if log_interval is not None and iteration % log_interval == 0:
@@ -306,22 +311,32 @@ class PPO_Rover(PPO):
                     self.logger.record("rollout/ep_rew_mean", r)
                     self.logger.record("rollout/ep_rew_min", minEpRet)
                     self.logger.record("rollout/ep_rew_max", maxEpRet)
-                    self.logger.record("rollout/ep_len_mean", safe_mean([ep_info["l"] for ep_info in self.ep_info_buffer]))
+                    self.logger.record("rollout/ep_len_mean",
+                                       safe_mean([ep_info["l"] for ep_info in self.ep_info_buffer]))
                     self.logger.record("rollout/death_rate (%)", death_rate)
                     self.logger.record("rollout/Avg÷MEA (%)", avg_per_MEA)
                     self.logger.record("rollout/success_rate (%)", success_rate)
                     for i in range(3):
-                        self.logger.record("rollout/goal"+str(i)+'_episodes', goal_episodes[i])
+                        self.logger.record("rollout/goal" + str(i) + '_episodes', goal_episodes[i])
                         self.logger.record("rollout/goal" + str(i) + '_reached', goal_reached_episodes[i])
-                self.logger.record("time/fps", fps)
-                self.logger.record("time/time_elapsed", int(time_elapsed), exclude="tensorboard")
-                self.logger.record("time/total_timesteps", self.num_timesteps, exclude="tensorboard")
-                self.logger.dump(step=self.num_timesteps)
 
             self.train()
+
+            time_elapsed = max((time_after_stepping - self.start_time) / 1e9, sys.float_info.epsilon)
+            time_stepping = max((time_after_stepping - time_before_stepping) / 1e9, sys.float_info.epsilon)
+            fps = int((self.num_timesteps - self._num_timesteps_at_start) / time_elapsed)
+            time_after_training = time.time_ns()
+            time_training = max((time_after_training - time_after_stepping) / 1e9, sys.float_info.epsilon)
+            if log_interval is not None and iteration % log_interval == 0:
+                self.logger.record("time/fps", fps)
+                self.logger.record("time/time_stepping", time_stepping)
+                self.logger.record("time/time_elapsed", int(time_elapsed), exclude="tensorboard")
+                self.logger.record("time/total_timesteps", self.num_timesteps, exclude="tensorboard")
+                self.logger.record("time/time_training", time_training)
+                self.logger.dump(step=self.num_timesteps)
+
             if self.clear_ep_info_buffer_every_iteration:
                 self.ep_info_buffer.clear()
-# TODO: Implement Ranking System
         callback.on_training_end()
 
         return self
@@ -356,11 +371,12 @@ class PPO_Rover(PPO):
             avg_per_MEA = 100.0 * avgEpRet / MEA
             success_rate = 100.0 * np.sum(goal_reached_episodes) / num_episodes
         return minEpRet, maxEpRet, avgEpRet, death_rate, avg_per_MEA, success_rate, goal_episodes, goal_reached_episodes
+
     def save(
-        self,
-        path: Union[str, pathlib.Path, io.BufferedIOBase],
-        exclude: Optional[Iterable[str]] = None,
-        include: Optional[Iterable[str]] = None,
+            self,
+            path: Union[str, pathlib.Path, io.BufferedIOBase],
+            exclude: Optional[Iterable[str]] = None,
+            include: Optional[Iterable[str]] = None,
     ) -> None:
         """
         Save all the attributes of the object and the model parameters in a zip-file.
