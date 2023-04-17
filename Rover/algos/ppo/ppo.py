@@ -287,8 +287,18 @@ class PPO_Rover(PPO):
 
             # Display training infos
             if log_interval is not None and iteration % log_interval == 0:
-                time_elapsed = max((time.time_ns() - self.start_time) / 1e9, sys.float_info.epsilon)
-                fps = int((self.num_timesteps - self._num_timesteps_at_start) / time_elapsed)
+                if self.rover_rankings is not None:  # default ranking system [non-dying (%), Avg÷MEA (%), success (%)]
+                    new_network = self.rover_rankings.Network(iteration,
+                                                              [100.0 - death_rate, avg_per_MEA, success_rate])
+                    should_save = self.rover_rankings.rank_new_network(new_network)
+                    self.rover_rankings.print_rankings()
+                    if should_save:
+                        self.save(os.path.join(self.rover_rankings.save_path, self.rover_rankings.networks_subfolder,
+                                               '%.5i'%iteration), exclude=None) #TODO: Fix in case of None for any arg in join
+                        #self.save(os.path.join('saved_networks',  '%.5i'%iteration), exclude=None)
+                        self.rover_rankings.write_ranking_files()
+
+                time_after_stepping = time.time_ns()
                 self.logger.record("time/iterations", iteration, exclude="tensorboard")
                 if len(self.ep_info_buffer) > 0 and len(self.ep_info_buffer[0]) > 0:
                     self.logger.record("rollout/ep_rew_mean", r)
