@@ -131,7 +131,7 @@ class PPO_Rover(PPO):
                 _init_setup_model,
         )
         self.clear_ep_info_buffer_every_iteration = clear_ep_info_buffer_every_iteration
-
+        self.rover_rankings = None
     def train(self) -> None:
         """
         Update policy using the currently gathered rollout buffer.
@@ -405,3 +405,6 @@ class PPO_Rover(PPO):
         params_to_save = self.get_parameters()
 
         save_to_zip_file(path, data=data, params=params_to_save, pytorch_variables=pytorch_variables)
+
+    def set_ranking_system(self, rover_rankings: RoverRankingSystem):
+        self.rover_rankings = rover_rankings
