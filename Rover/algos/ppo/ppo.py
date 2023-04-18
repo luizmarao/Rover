@@ -292,6 +292,7 @@ class PPO_Rover(PPO):
             # Personalized Rover info processing
             minEpRet, maxEpRet, r, death_rate, avg_per_MEA, success_rate, goal_episodes, goal_reached_episodes = self.eval_rover_performance()
 
+            time_after_stepping = time.time_ns()
             # Display training infos
             if log_interval is not None and iteration % log_interval == 0:
                 if self.rover_rankings is not None:  # default ranking system [non-dying (%), Avg÷MEA (%), success (%)]
@@ -305,7 +306,6 @@ class PPO_Rover(PPO):
                         #self.save(os.path.join('saved_networks',  '%.5i'%iteration), exclude=None)
                         self.rover_rankings.write_ranking_files()
 
-                time_after_stepping = time.time_ns()
                 self.logger.record("time/iterations", iteration, exclude="tensorboard")
                 if len(self.ep_info_buffer) > 0 and len(self.ep_info_buffer[0]) > 0:
                     self.logger.record("rollout/ep_rew_mean", r)
