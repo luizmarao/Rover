@@ -93,6 +93,7 @@ class HumanOutputFormat4Rover(HumanOutputFormat):
         # Create strings for printing
         key2str = {}
         tag = None
+        tags = []
         for (key, value), (_, excluded) in zip(sorted(key_values.items()), sorted(key_excluded.items())):
             if excluded is not None and ("stdout" in excluded or "log" in excluded):
                 continue
@@ -117,10 +118,11 @@ class HumanOutputFormat4Rover(HumanOutputFormat):
 
             if key.find("/") > 0:  # Find tag and add it to the dict
                 tag = key[: key.find("/") + 1]
-                key2str[(tag, self._truncate(tag))] = ""
+                if tag not in tags:
+                    tags.append(tag)
             # Remove tag from key
             if tag is not None and tag in key:
-                key = str("   " + key[len(tag) :])
+                key = str(key[len(tag):])
 
             truncated_key = self._truncate(key)
             if (tag, truncated_key) in key2str:
@@ -128,23 +130,44 @@ class HumanOutputFormat4Rover(HumanOutputFormat):
                     f"Key '{key}' truncated to '{truncated_key}' that already exists. Consider increasing `max_length`."
                 )
             key2str[(tag, truncated_key)] = self._truncate(value_str)
-
+        tag_separated_key2str = {}
+        for tag in tags:
+            tag_separated_key2str[tag] = []
+        for (tag, key), value in key2str.items():
+            tag_separated_key2str[tag].append([key, value])
         # Find max widths
         if len(key2str) == 0:
             warnings.warn("Tried to write empty key-value dict")
             return
         else:
-            tagless_keys = map(lambda x: x[1], key2str.keys())
-            key_width = max(map(len, tagless_keys))
-            val_width = max(map(len, key2str.values()))
-
-        # Write out the data
-        dashes = "-" * (key_width + val_width + 7)
+            key_width = []
+            val_width = []
+            for tag in tags:
+                key_width.append(max([len(elem[0]) for elem in tag_separated_key2str[tag]]))
+                val_width.append(max([len(elem[1]) for elem in tag_separated_key2str[tag]]))
+       # Write out the data
+        dashes = "-" * (sum(key_width) + sum(val_width) + len(tags)*7-1)
         lines = [dashes]
-        for (_, key), value in key2str.items():
-            key_space = " " * (key_width - len(key))
-            val_space = " " * (val_width - len(value))
-            lines.append(f"| {key}{key_space} | {value}{val_space} |")
+        header = '||'
+        for tag in range(len(tags)):
+            tag_space = " " * (key_width[tag] + val_width[tag] - len(tags[tag]))
+            header += f" {tags[tag]}{tag_space}   ||"
+        lines.append(header)
+        lines.append(dashes)
+        longer_len = max([len(tag_separated_key2str[tag]) for tag in tags])
+        for i in range(longer_len):
+            line = '||'
+            for tag in range(len(tags)):
+                aux = tag_separated_key2str[tags[tag]]
+                if len(aux) > i:
+                    [key, value] = aux[i]
+                else:
+                    key = ''
+                    value = ''
+                key_space = " " * (key_width[tag] - len(key))
+                val_space = " " * (val_width[tag] - len(value))
+                line += f" {key}{key_space} | {value}{val_space}||"
+            lines.append(line)
         lines.append(dashes)
 
         if tqdm is not None and hasattr(self.file, "name") and self.file.name == "<stdout>":
