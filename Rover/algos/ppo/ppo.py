@@ -345,8 +345,8 @@ class PPO_Rover(PPO):
         epinfobuf = self.ep_info_buffer
         r = [epinfo['r'] for epinfo in epinfobuf]
         avgEpRet = safe_mean(r)
-        minEpRet = np.min(r)
-        maxEpRet = np.max(r)
+        minEpRet = np.nan if len(r) == 0 else np.min(r)
+        maxEpRet = np.nan if len(r) == 0 else np.max(r)
         deaths = 0
         for epinfo in epinfobuf:
             if epinfo.get("death") is not None or epinfo.get("timeout") is not None:
@@ -370,6 +370,10 @@ class PPO_Rover(PPO):
             death_rate = 100.0 * deaths / num_episodes
             avg_per_MEA = 100.0 * avgEpRet / MEA
             success_rate = 100.0 * np.sum(goal_reached_episodes) / num_episodes
+        else:
+            death_rate = np.nan
+            avg_per_MEA = np.nan
+            success_rate = np.nan
         return minEpRet, maxEpRet, avgEpRet, death_rate, avg_per_MEA, success_rate, goal_episodes, goal_reached_episodes
 
     def save(
