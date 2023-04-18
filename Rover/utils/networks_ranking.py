@@ -80,7 +80,7 @@ class RoverRankingSystem:
         descrip = ['', 'Non dying [%]', 'Avg/MEA [%]', 'Success [%]', '']
         print(' |'.join([fmt_size.format(d) for d in descrip]))
         print(fmt_size.format('Position') + ' |', end='')
-        print(' |'.join(['{:>9}{:>9}'.format('Perf', ' Iteration') for _ in self.rankings]), '|')
+        print(' |'.join(['{:>7}{:>11}'.format('Perf', ' Iteration') for _ in self.rankings]), '|')
 
         print((' ' * 10) + '-' * (4 * 18 - 3))
 
@@ -89,7 +89,7 @@ class RoverRankingSystem:
             print(fmt_size.format(line_idx + 1) + ' |', end='')
             for rank_idx, rank in enumerate(self.rankings):
                 if line_idx < len(rank):
-                    print('{:>9.2f}{:>9}'.format(rank[line_idx].performance_list[rank_idx], rank[line_idx].iteration),
+                    print('{:>7.2f}{:>11}'.format(rank[line_idx].performance_list[rank_idx], rank[line_idx].iteration),
                           end='')
                 else:
                     print(fmt_size.format(''), end='')
