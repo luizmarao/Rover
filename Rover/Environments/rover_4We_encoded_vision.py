@@ -16,7 +16,8 @@ class Rover4WeEncodedVisionv0Env(RoverRobotrek4Wev2Env):
 
     def camera_rendering(self):
         gray_normalized = super().camera_rendering()
-        encoded = self.encoder(gray_normalized)
+        expanded_dim_gray_normalized = np.expand_dims(gray_normalized, (0, -1))
+        encoded = np.asarray(self.encoder(expanded_dim_gray_normalized))
         flatten = np.ndarray.flatten(encoded)
         return flatten
 
