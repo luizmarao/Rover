@@ -151,6 +151,7 @@ class RoverRobotrek4Wev2Env(MujocoEnv, utils.EzPickle):
     sensors_error = 0.00  # Magnitude of randomized gaussian error over position and/or speed sensor
     im_size = (440, 270)  # tamanho da imagem adquirida pelo mujoco
     img_reduced_size = (32, 32)  # tamanho da imagem reduzida
+    observation_space_size = np.product(img_reduced_size) + 14
 
     '''
     About start_at_initpos, random_start(rs), random_current_goal(rcg) and force goal:
@@ -228,7 +229,7 @@ class RoverRobotrek4Wev2Env(MujocoEnv, utils.EzPickle):
     }
 
     def __init__(self, **kwargs):
-        observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(np.product(self.img_reduced_size) + 14,),
+        observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.observation_space_size,),
                                        dtype=np.float64)
 
         model_path = os.path.join(os.path.dirname(__file__), 'assets', 'Rover4We')
