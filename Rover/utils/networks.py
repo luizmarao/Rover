@@ -13,14 +13,14 @@ class RovernetClassic(BaseFeaturesExtractor):
     """
 
     def __init__(self, observation_space: spaces.Box, features_dim: int = 256, img_red_size=(32,32),
-                 rover_2cam_and_combined_image=False, dynamic_obs_size=14, conv_layers=[(16, 8, 2), (32, 4, 2)],
+                 rover_2cam_and_packed_images=False, dynamic_obs_size=14, conv_layers=[(16, 8, 2), (32, 4, 2)],
                  lin_layers=None):
         super().__init__(observation_space, features_dim)
         # We assume CxHxW images (channels first)
         # Re-ordering will be done by pre-preprocessing or wrapper
         self.dynamic_obs_size = dynamic_obs_size
         self.img_red_size = img_red_size
-        self.n_input_channels = 2 if rover_2cam_and_combined_image else 1
+        self.n_input_channels = 2 if rover_2cam_and_packed_images else 1
         self.cnn = nn.Sequential()
         channels = self.n_input_channels
         for (filters, size, stride) in conv_layers:
@@ -32,7 +32,7 @@ class RovernetClassic(BaseFeaturesExtractor):
 
         # Compute shape by doing one forward pass
         with th.no_grad():
-            img = observation_space.sample()[dynamic_obs_size:].reshape((1, img_red_size[0], img_red_size[1]))[None]
+            img = observation_space.sample()[dynamic_obs_size:].reshape((self.n_input_channels, img_red_size[0], img_red_size[1]))[None]
             n_flatten = self.cnn(
                 th.as_tensor(img).float()
             ).shape[1]
