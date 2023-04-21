@@ -22,7 +22,7 @@ logger = configure(folder=None, format_strings=["stdout", "csv", "tensorboard"],
 
 register_rover_environments()
 ## ENVIRONMENT PARAMETERS ##
-rover_env = "Rover4We-v1"
+rover_env = "Rover4We-v2"
 img_red_size = (32, 32)
 rover_2cam_and_combined_image = False
 reduced_obs = False  # TODO: fix size bellow

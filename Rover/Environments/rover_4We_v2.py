@@ -127,7 +127,7 @@ from typing import Optional, Union
 # Na configuração A, os elementos (2, 1) e (2, 3) tem obstáculos
 # Na configuração B, os elementos (1, 2) e (3, 2) tem obstáculos
 
-class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
+class RoverRobotrek4Wev2Env(MujocoEnv, utils.EzPickle):
     step_counter = 0
     # EXPERIMENTS LOG PARAMETERS #
     original_field = False
