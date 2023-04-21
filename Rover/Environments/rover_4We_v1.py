@@ -130,12 +130,9 @@ from typing import Optional, Union
 class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
     step_counter = 0
     # EXPERIMENTS LOG PARAMETERS #
-    loose_version = False
-    ackerman_version = True
     original_field = False
     use_ramps = True
     use_posts = True
-    reduced_obs = False
     vectorized_obs = True
     flip_penalising = True
     flipped_time = 2.0
@@ -180,12 +177,6 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
     last_15_pos = np.array([3, 3])
     last_15_time = 0
     last_straight_time = 0
-    '''if reduced_obs:
-        obs_size = (5,)
-    elif loose_version:
-        obs_size = (16,)
-    else:
-        obs_size = (14,)'''
 
     initial_pos_A = ((22.5, 15.5, 0), (22.5, 5.5, 0))
     initial_pos_B = ((11.5, 10.5, 0), (33.5, 10.5, 0))
@@ -279,22 +270,20 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
 
         self.holes = np.zeros((2, 11, 5))
         self.map_generator()
-        # self.camera_renderer = mujoco_py.MjRenderContextOffscreen(self.sim)
         self.camera_id = self.camera_name2id('first-person')
 
-    #def camera_renderer_initializer(self):
-        #self.camera_renderer = mujoco_py.MjRenderContextOffscreen(self.sim)
-
-    def camera_rendering(self, width, height, cam_id):
-        self.camera_renderer.render(width=width, height=height, camera_id=cam_id)
-        if os.getenv('MUJOCO_PY_FORCE_CPU') is not None:
-            self.camera_renderer.render(width=width, height=height, camera_id=cam_id) #precisa renderizar 2x pra ficar bom sem headless
-        img = self.camera_renderer.read_pixels(width, height, False)
-        return img
+    def camera_rendering(self):  # TODO: fix path for image saving
+        img = self.mujoco_renderer.render("rgb_array", camera_name='first-person')
+        if self.save_images: cv2.imwrite("./running_images/full_size_{:0>7.3f}.png".format(self.data.time),
+                                         cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+        img = cv2.resize(img, self.img_reduced_size)
+        gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        if self.save_images: cv2.imwrite("./running_images/reduced_size_{:0>7.3f}.png".format(self.data.time),
+                                         cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+        if self.save_images: cv2.imwrite("./running_images/reduced_gray_{:0>7.3f}.png".format(self.data.time), gray)
+        return gray / 255.0
 
     def format_obs(self, lin_obs, img_obs):
-        if self.reduced_obs:
-            lin_obs = np.concatenate([lin_obs[:2], lin_obs[-3:]])
         if self.vectorized_obs:
             img = np.reshape(img_obs, (self.img_reduced_size[0]*self.img_reduced_size[1]))
             lin = lin_obs
@@ -332,10 +321,11 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
                     np.sqrt(np.square(desired_trajectory).sum()) * self.dt)
 
         # Cálculo do custo de controle
-        if self.loose_version:
-            ctrl_cost = self.control_cost * np.square(action).sum()
-        else:
-            ctrl_cost = self.control_cost * np.square(action[1])
+        ctrl_cost = self.control_cost * np.square(action[1])
+        # if self.loose_version:
+        #     ctrl_cost = self.control_cost * np.square(action).sum()
+        # else:
+        #     ctrl_cost = self.control_cost * np.square(action[1])
 
         # Cálculo da reward de sobrevivência
         # survive_reward = self.svv_rew
@@ -407,13 +397,6 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
                 info['death'] = 1  # self kill
                 print(colorize("Flipped", 'magenta', bold=True))
 
-        # if self.data.time > 2: # avoid initial falling
-        #     colision, bumpiness = self.colision_detector(self.max_accxy, self.max_accz)
-        #     if colision:
-        #         r -= self.colision_penalty
-        #     elif bumpiness:
-        #         r -= self.bumpiness_penalty
-
         obs = self.format_obs(ob, img)
         truncated = False
         return obs, r, terminated, truncated, info
@@ -422,12 +405,14 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
 
         rr_wheel_zpos = self.data.xpos[self.body_name2id('r-r-wheel')][2]
         rl_wheel_zpos = self.data.xpos[self.body_name2id('r-l-wheel')][2]
-        if not self.loose_version:
-            fr_wheel_zpos = self.data.xpos[self.body_name2id('f-r-wheel')][2]
-            fl_wheel_zpos = self.data.xpos[self.body_name2id('f-l-wheel')][2]
-        else:
-            fr_wheel_zpos = self.data.xpos[self.body_name2id('steer-r-wheel')][2]
-            fl_wheel_zpos = self.data.xpos[self.body_name2id('steer-l-wheel')][2]
+        fr_wheel_zpos = self.data.xpos[self.body_name2id('f-r-wheel')][2]
+        fl_wheel_zpos = self.data.xpos[self.body_name2id('f-l-wheel')][2]
+        # if not self.loose_version:
+        #     fr_wheel_zpos = self.data.xpos[self.body_name2id('f-r-wheel')][2]
+        #     fl_wheel_zpos = self.data.xpos[self.body_name2id('f-l-wheel')][2]
+        # else:
+        #     fr_wheel_zpos = self.data.xpos[self.body_name2id('steer-r-wheel')][2]
+        #     fl_wheel_zpos = self.data.xpos[self.body_name2id('steer-l-wheel')][2]
 
         rover_centroid_zpos = self.data.xpos[1][2]
 
@@ -487,44 +472,23 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
         # orientation_rover
         orientation_rover = self.data.xmat[1][0:2].copy()
         rover_ang_speed = self.data.qvel[5].copy()
-        if not self.loose_version:
-            if self.ackerman_version:
-                ghost_steer_angle = self.data.qpos[9]
-                ghost_steer_angspeed = self.data.qvel[8]
-            else:
-                steer_bar_angle = self.data.qpos[9]
-                steer_bar_angspeed = self.data.qvel[8]
-        else: #
-            steer_r_wheel_angle = self.data.qpos[13]
-            steer_r_wheel_angspeed = self.data.qvel[12]
-            steer_l_wheel_angle = self.data.qpos[11]
-            steer_l_wheel_angspeed = self.data.qvel[10]
+        ghost_steer_angle = self.data.qpos[9]
+        ghost_steer_angspeed = self.data.qvel[8]
+        # if not self.loose_version:
+        #     if self.ackerman_version:
+        #         ghost_steer_angle = self.data.qpos[9]
+        #         ghost_steer_angspeed = self.data.qvel[8]
+        #     else:
+        #         steer_bar_angle = self.data.qpos[9]
+        #         steer_bar_angspeed = self.data.qvel[8]
+        # else:  #
+        #     steer_r_wheel_angle = self.data.qpos[13]
+        #     steer_r_wheel_angspeed = self.data.qvel[12]
+        #     steer_l_wheel_angle = self.data.qpos[11]
+        #     steer_l_wheel_angspeed = self.data.qvel[10]
 
-        # camera #TODO verificar sapoha
-        img = self.mujoco_renderer.render("rgb_array", camera_name='first-person')
-        if self.save_images: cv2.imwrite("./running_images/full_size_{:0>7.3f}.png".format(self.data.time),
-                                         cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-        img = cv2.resize(img, self.img_reduced_size)
-        gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        if self.save_images: cv2.imwrite("./running_images/reduced_size_{:0>7.3f}.png".format(self.data.time),
-                                         cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-        if self.save_images: cv2.imwrite("./running_images/reduced_gray_{:0>7.3f}.png".format(self.data.time), gray)
-
-        # if os.getenv('MUJOCO_PY_FORCE_CPU') is not None:
-        #     if not self.is_cam:
-        #         self.sim.render(
-        #             mode='window')  # , camera_name='first-person', width=im_size[0], height=im_size[1], depth=False)
-        #         self.is_cam = True
-        # if self.camera_renderer is None:
-        #     gray = np.zeros(shape=self.img_reduced_size)
-        #     self.camera_renderer_initializer()
-        # else:
-        #     img = self.camera_rendering(width=self.im_size[0], height=self.im_size[1], cam_id=self.camera_id)
-        #     if self.save_images: cv2.imwrite("./running_images/full_size_{:0>7.3f}.png".format(self.data.time), cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-        #     img = cv2.resize(img, self.img_reduced_size)
-        #     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        #     if self.save_images: cv2.imwrite("./running_images/reduced_size_{:0>7.3f}.png".format(self.data.time), cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-        #     if self.save_images: cv2.imwrite("./running_images/reduced_gray_{:0>7.3f}.png".format(self.data.time), gray)
+        # Visual obs
+        visual_obs = self.camera_rendering()
 
         if self.current_goal == 0:
             coordinates_goal = np.asarray([40, 20])
@@ -539,34 +503,9 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
             coordinates_goal = np.asarray([0, 0])
             goal = np.asarray([0, 0, 0])
 
-
-        if not self.loose_version:
-            if self.ackerman_version:
-                return gps_exact, np.concatenate(
-                    [gps_sensor.flat, orientation_rover.flat, [ghost_steer_angle], speed_sensor.flat, [rover_ang_speed],
-                     [ghost_steer_angspeed], coordinates_goal.flat, goal.flat]), gray / 255.0
-            else:
-                return gps_exact, np.concatenate(
-                    [gps_sensor.flat, orientation_rover.flat, [steer_bar_angle], speed_sensor.flat, [rover_ang_speed],
-                     [steer_bar_angspeed], coordinates_goal.flat, goal.flat]), gray / 255.0
-
-        else:
-            return gps_exact, np.concatenate(
-                [gps_sensor.flat, orientation_rover.flat, [steer_r_wheel_angle], [steer_l_wheel_angle], speed_sensor.flat, [rover_ang_speed],
-                 [steer_r_wheel_angspeed], [steer_l_wheel_angspeed], coordinates_goal.flat, goal.flat]), gray / 255.0
-
-        '''return gps_exact, np.concatenate(
-            [gps_sensor.flat, orientation_rover.flat, [steer_bar_angle], speed_sensor.flat, [rover_ang_speed],
-             [steer_bar_angspeed], coordinates_goal.flat, goal.flat]), gray / 255.0'''
-
-    # def render(self, mode=None):
-    #     if os.getenv('MUJOCO_PY_FORCE_CPU') is None:
-    #         self._get_viewer('rgb_array').render() #headless case
-    #     else:
-    #         self._get_viewer('human').render() #not headless
-    #     if self.flag_render == False:
-    #         self.camera_renderer_initializer()
-    #         self.flag_render = True
+        return gps_exact, np.concatenate(
+            [gps_sensor.flat, orientation_rover.flat, [ghost_steer_angle], speed_sensor.flat, [rover_ang_speed],
+             [ghost_steer_angspeed], coordinates_goal.flat, goal.flat]), visual_obs
 
     def reset_model(self):
         self.step_counter = 0
