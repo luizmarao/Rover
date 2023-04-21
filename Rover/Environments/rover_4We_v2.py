@@ -279,15 +279,15 @@ class RoverRobotrek4Wev2Env(MujocoEnv, utils.EzPickle):
         self.map_generator()
         self.camera_id = self.camera_name2id('first-person')
 
-    def camera_rendering(self):  # TODO: fix path for image saving
+    def camera_rendering(self, camera_name='first-person', extra_img_name=''):  # TODO: fix path for image saving
         img = self.mujoco_renderer.render("rgb_array", camera_name='first-person')
-        if self.save_images: cv2.imwrite("./running_images/full_size_{:0>7.3f}.png".format(self.data.time),
+        if self.save_images: cv2.imwrite("./running_images/full_size_{}{:0>7.3f}.png".format(extra_img_name, self.data.time),
                                          cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
         img = cv2.resize(img, self.img_reduced_size)
         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        if self.save_images: cv2.imwrite("./running_images/reduced_size_{:0>7.3f}.png".format(self.data.time),
+        if self.save_images: cv2.imwrite("./running_images/reduced_size_{}{:0>7.3f}.png".format(extra_img_name, self.data.time),
                                          cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-        if self.save_images: cv2.imwrite("./running_images/reduced_gray_{:0>7.3f}.png".format(self.data.time), gray)
+        if self.save_images: cv2.imwrite("./running_images/reduced_gray_{}{:0>7.3f}.png".format(extra_img_name, self.data.time), gray)
         return gray / 255.0
 
     def format_obs(self, lin_obs, img_obs):
