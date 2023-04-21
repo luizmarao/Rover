@@ -230,8 +230,7 @@ class RoverRobotrek4Wev2Env(MujocoEnv, utils.EzPickle):
     def __init__(self, **kwargs):
         observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(np.product(self.img_reduced_size) + 14,),
                                        dtype=np.float64)
-        if self.random_current_goal:
-            self.randomize_current_goal()
+
         model_path = os.path.join(os.path.dirname(__file__), 'assets', 'Rover4We')
         MujocoEnv.__init__(
             self,
@@ -241,7 +240,11 @@ class RoverRobotrek4Wev2Env(MujocoEnv, utils.EzPickle):
             **kwargs,
         )
         utils.EzPickle.__init__(self)
+        self.env_config()
 
+    def env_config(self):
+        if self.random_current_goal:
+            self.randomize_current_goal()
         self.body_names = [self.model.body(i).name for i in range(self.model.nbody)]
 
         self.body_name2id = lambda body_name: mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, body_name)
