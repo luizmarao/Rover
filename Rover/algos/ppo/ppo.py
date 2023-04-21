@@ -302,7 +302,7 @@ class PPO_Rover(PPO):
                     self.rover_rankings.print_rankings()
                     if should_save:
                         self.save(os.path.join(self.rover_rankings.save_path, self.rover_rankings.networks_subfolder,
-                                               '%.5i'%iteration), exclude=None) #TODO: Fix in case of None for any arg in join
+                                               '%.5i'%iteration), exclude=None)
                         #self.save(os.path.join('saved_networks',  '%.5i'%iteration), exclude=None)
                         self.rover_rankings.write_ranking_files()
 
