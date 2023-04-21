@@ -117,10 +117,10 @@ import gymnasium
 from gymnasium import utils
 from gymnasium.envs.mujoco import MujocoEnv
 from gymnasium import spaces
-#import matplotlib.pyplot as plt
 import mujoco
 import os
 from typing import Optional, Union
+
 
 # O campo tem dimensoes (x,y)=(44,25) [metros]
 # É uma matriz (x,y) de (0,0) até (3, 4) elementos, em que cada elemento tem dimensão (x,y) de (44/4, 25/5) = (11.0 , 5.0) [metros]
@@ -148,24 +148,25 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
     circle_pnlt = 10
     flip_pnlt = 10
     goal_rwd = 1
-    gps_error = 0.00  # Erro gaussiano do GPS
+    sensors_error = 0.00  # Magnitude of randomized gaussian error over position and/or speed sensor
     im_size = (440, 270)  # tamanho da imagem adquirida pelo mujoco
     img_reduced_size = (32, 32)  # tamanho da imagem reduzida
 
-    # if start_at_initpos is True, random_start is not used.
-    # if start_at_initpos is False, random_start is used.
+    '''
+    About start_at_initpos, random_start(rs), random_current_goal(rcg) and force goal:
+    if start_at_initpos is True, random_start is not used.
+    if start_at_initpos is False, random_start is used.
+    rs True  and rcg True : rover starts (almost) anywhere and has a random goal (0, 1 or 2)
+    rs True  and rcg False: rover starts (almost) anywhere and has as current_goal the first goal (0)
+    rs False and rcg True : rover starts at the goal before its current_goal (and this one is random: 0, 1 or 2)
+    rs False and rcg False: rover starts at the goal before its current_goal (and this one is the first goal: 0)
+    force_goal -1 will not make anything, 0/1/2 will force goal to be 0/1/2
+    '''
     start_at_initpos = False
-
-    # about random_start(rs) and random_current_goal(rcg)
-    # rs True  and rcg True : rover starts (almost) anywhere and has a random goal (0, 1 or 2)
-    # rs True  and rcg False: rover starts (almost) anywhere and has as current_goal the first goal (0)
-    # rs False and rcg True : rover starts at the goal before its current_goal (and this one is random: 0, 1 or 2)
-    # rs False and rcg False: rover starts at the goal before its current_goal (and this one is the first goal: 0)
-    # force_goal -1 will not make anything, 0/1/2 will force goal to be 0/1/2
     force_goal = -1
     random_start = False
     random_current_goal = True
-    avoid_radius = 0.5 # radius for obstacle avoidance in rover's position randomizer
+    avoid_radius = 0.5  # radius for obstacle avoidance in rover's position randomizer
 
     # defines if the episode will end after current_goal is reached
     end_after_current_goal = True
@@ -198,17 +199,16 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
     box_tile_storage = []
     box_tile_used = []
 
-
     ramp_storage = []
     ramp_used = []
-
 
     post_storage = []
     post_used = []
 
     useds_lists_list = [long_bump_used, circular_bump_used, square_long_hole_used, square_hole_used, box_tile_used,
                         ramp_used, post_used]
-    storage_lists_list = [long_bump_storage, circular_bump_storage, square_long_hole_storage, square_hole_storage, box_tile_storage,
+    storage_lists_list = [long_bump_storage, circular_bump_storage, square_long_hole_storage, square_hole_storage,
+                          box_tile_storage,
                           ramp_storage, post_storage]
 
     camera_renderer = None
@@ -216,7 +216,7 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
     flag_render = False
     save_images = False
 
-    reseted = False # a flag for the first step after a reset, to send new goal flag in info dict
+    reseted = False  # a flag for the first step after a reset, to send new goal flag in info dict
 
     metadata = {
         "render_modes": [
@@ -228,14 +228,15 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
     }
 
     def __init__(self, **kwargs):
-        observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(np.product(self.img_reduced_size)+14,), dtype=np.float64)
+        observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(np.product(self.img_reduced_size) + 14,),
+                                       dtype=np.float64)
         if self.random_current_goal:
             self.randomize_current_goal()
         model_path = os.path.join(os.path.dirname(__file__), 'assets', 'Rover4We-v1')
         MujocoEnv.__init__(
             self,
-            os.path.join(model_path, 'main-trekking-challenge-4wheels_diff-acker-double-front-wheel.xml'),
-            4,
+            model_path=os.path.join(model_path, 'main-trekking-challenge-4wheels_diff-acker-double-front-wheel.xml'),
+            frame_skip=4,
             observation_space=observation_space,
             **kwargs,
         )
@@ -285,7 +286,7 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
 
     def format_obs(self, lin_obs, img_obs):
         if self.vectorized_obs:
-            img = np.reshape(img_obs, (self.img_reduced_size[0]*self.img_reduced_size[1]))
+            img = np.reshape(img_obs, (self.img_reduced_size[0] * self.img_reduced_size[1]))
             lin = lin_obs
             return np.concatenate([lin, img])
         else:
@@ -301,7 +302,7 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
         Step da simulação : são definidos o observation_state, o reward e se o episódio terminou 
         '''
         x_before = self.data.qpos[0:2].copy()
-        #x_before = self.x_before  # salva o vetor estado anterior
+        # x_before = self.x_before  # salva o vetor estado anterior
         '''
         For regular version: action[0] = steering_torque, action[1] = traction_torque
         For loose version: action[0] = steering_torque, action[1] = traction_torque
@@ -318,7 +319,7 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
         desired_trajectory = cur_goal - x_before
         performed_trajectory = x_after - x_before
         forward_reward = self.fwd_rew * np.dot(performed_trajectory, desired_trajectory) / (
-                    np.sqrt(np.square(desired_trajectory).sum()) * self.dt)
+                np.sqrt(np.square(desired_trajectory).sum()) * self.dt)
 
         # Cálculo do custo de controle
         ctrl_cost = self.control_cost * np.square(action[1])
@@ -341,7 +342,7 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
         # goal_reached_flag = -1
         info = {}
 
-        if self.reseted: # only send the current goal if the env was just reseted
+        if self.reseted:  # only send the current goal if the env was just reseted
             info['current_goal'] = self.current_goal
             self.reseted = False
 
@@ -358,7 +359,7 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
 
         # Soma todas as rewards e custos
         # r = survive_reward + forward_reward - ctrl_cost + goal_reward
-        r = forward_reward - ctrl_cost - time_cost + goal_reward #+ self.svv_rew
+        r = forward_reward - ctrl_cost - time_cost + goal_reward  # + self.svv_rew
 
         # Atualização da reward caso o carrinho termine a prova ou de penalidades caso o carrinho deixe o campo (dá pra tacar numa função isso aqui)
         if (self.current_goal == -1):
@@ -369,7 +370,7 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
             terminated = True
             print(colorize("Left Camp", 'magenta', bold=True))
             r -= self.leave_penalty
-            info['death'] = 1 # self kill
+            info['death'] = 1  # self kill
         elif self.data.time >= 99.9:
             terminated = True
             info['timeout'] = self.current_goal
@@ -382,15 +383,19 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
             terminated = True
 
         self.last_15_pos, self.last_15_time, terminated, circle_penalty = self.death_circle(self.death_circ_dist,
-                                                                      self.death_circ_time, x_after, self.last_15_pos,
-                                                                      self.data.time, self.last_15_time, terminated)
+                                                                                            self.death_circ_time,
+                                                                                            x_after, self.last_15_pos,
+                                                                                            self.data.time,
+                                                                                            self.last_15_time,
+                                                                                            terminated)
         if self.death_circle_penalising:
             r -= circle_penalty
             if not circle_penalty == 0:
                 info['death'] = 1  # self kill
                 print(colorize("Death Circle Activated", 'magenta', bold=True))
-        self.last_straight_time, terminated, flip_penalty = self.is_flipped(terminated, self.data.time, self.last_straight_time,
-                                                                      self.flipped_time)
+        self.last_straight_time, terminated, flip_penalty = self.is_flipped(terminated, self.data.time,
+                                                                            self.last_straight_time,
+                                                                            self.flipped_time)
         if self.flip_penalising:
             r -= flip_penalty
             if not flip_penalty == 0:
@@ -465,9 +470,9 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
         speed_exact = [self.data.qvel[0:2]].copy()
 
         # gps sensor com erro
-        gps_sensor = gps_exact + self.gps_error * np.random.rand(2)
+        gps_sensor = gps_exact + self.sensors_error * np.random.rand(2)
         # vel sensor com erro
-        speed_sensor = np.asarray(speed_exact) # + self.gps_error * np.random.rand(2)
+        speed_sensor = np.asarray(speed_exact)  # + self.sensors_error * np.random.rand(2)
 
         # orientation_rover
         orientation_rover = self.data.xmat[1][0:2].copy()
@@ -533,20 +538,34 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
                 bad_position = True
                 while bad_position:
                     bad_position = False
-                    rover_random_xy_pos = np.asarray([np.random.rand()*44, np.random.rand()*25])
+                    rover_random_xy_pos = np.asarray([np.random.rand() * 44, np.random.rand() * 25])
                     # rover_random_xy_pos = self.model.body_pos[self.ramp_used[0]][0:2]
                     # print('new position: {}'.format(rover_random_xy_pos))
-                    if self.current_obstacle_setup == 'A' and ((11-self.avoid_radius <= rover_random_xy_pos[0] <= 22+self.avoid_radius and 10-self.avoid_radius <= rover_random_xy_pos[1] <= 15+self.avoid_radius) or (33-self.avoid_radius <= rover_random_xy_pos[0] <= 44+self.avoid_radius and 10-self.avoid_radius <= rover_random_xy_pos[1] <= 15+self.avoid_radius)):
+                    if self.current_obstacle_setup == 'A' and ((11 - self.avoid_radius <= rover_random_xy_pos[
+                        0] <= 22 + self.avoid_radius and 10 - self.avoid_radius <= rover_random_xy_pos[
+                                                                    1] <= 15 + self.avoid_radius) or (
+                                                                       33 - self.avoid_radius <= rover_random_xy_pos[
+                                                                   0] <= 44 + self.avoid_radius and 10 - self.avoid_radius <=
+                                                                       rover_random_xy_pos[
+                                                                           1] <= 15 + self.avoid_radius)):
                         bad_position = True
                         # print('cant: collision with "A" obstacles')
                         continue
-                    if self.current_obstacle_setup == 'B' and ((22-self.avoid_radius <= rover_random_xy_pos[0] <= 33+self.avoid_radius and  5-self.avoid_radius <= rover_random_xy_pos[1] <= 10+self.avoid_radius) or (22-self.avoid_radius <= rover_random_xy_pos[0] <= 33+self.avoid_radius and 15-self.avoid_radius <= rover_random_xy_pos[1] <= 20+self.avoid_radius)):
+                    if self.current_obstacle_setup == 'B' and ((22 - self.avoid_radius <= rover_random_xy_pos[
+                        0] <= 33 + self.avoid_radius and 5 - self.avoid_radius <= rover_random_xy_pos[
+                                                                    1] <= 10 + self.avoid_radius) or (
+                                                                       22 - self.avoid_radius <= rover_random_xy_pos[
+                                                                   0] <= 33 + self.avoid_radius and 15 - self.avoid_radius <=
+                                                                       rover_random_xy_pos[
+                                                                           1] <= 20 + self.avoid_radius)):
                         bad_position = True
                         # print('cant: collision with "B" obstacles')
                         continue
 
                     for ramp in self.ramp_used:
-                        if np.sqrt((self.model.body_pos[ramp][0]-rover_random_xy_pos[0])**2 + (self.model.body_pos[ramp][1]-rover_random_xy_pos[1])**2) < (np.sqrt(2)+self.avoid_radius):
+                        if np.sqrt((self.model.body_pos[ramp][0] - rover_random_xy_pos[0]) ** 2 + (
+                                self.model.body_pos[ramp][1] - rover_random_xy_pos[1]) ** 2) < (
+                                np.sqrt(2) + self.avoid_radius):
                             bad_position = True
                             # print('cant: collision between rover and ramp {}'.format(ramp))
                             break
@@ -554,7 +573,9 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
                         continue
 
                     for post in self.post_used:
-                        if np.sqrt((self.model.body_pos[post][0]-rover_random_xy_pos[0])**2 + (self.model.body_pos[post][1]-rover_random_xy_pos[1])**2) < (0.15+self.avoid_radius):
+                        if np.sqrt((self.model.body_pos[post][0] - rover_random_xy_pos[0]) ** 2 + (
+                                self.model.body_pos[post][1] - rover_random_xy_pos[1]) ** 2) < (
+                                0.15 + self.avoid_radius):
                             bad_position = True
                             # print('cant: collision between rover and post {}'.format(post))
                             break
@@ -575,24 +596,27 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
                     #                 continue
                 print(colorize("starting at random position {}".format(rover_random_xy_pos), 'blue', bold=False))
                 # print('current_goal: {}'.format(self.current_goal))
-                quat = create_quat(np.random.rand()*2*np.pi, 0, 0, 1, is_radian=True)
+                quat = create_quat(np.random.rand() * 2 * np.pi, 0, 0, 1, is_radian=True)
                 self.set_state(np.array([*rover_random_xy_pos, 0.2, *quat, *self.init_qpos[7:]]), self.init_qvel)
-                #self.set_state(np.array([*(self.sim.model.body_pos[self.ramp_used[0]][0:2]), 0.200, *self.init_qpos[3:]]), self.init_qvel)
+                # self.set_state(np.array([*(self.sim.model.body_pos[self.ramp_used[0]][0:2]), 0.200, *self.init_qpos[3:]]), self.init_qvel)
             else:
                 if self.current_goal < 1:
                     self.set_state(self.init_qpos, self.init_qvel)
                 else:
-                    quat = create_quat(np.random.rand()*2*np.pi, 0, 0, 1, is_radian=True)
+                    quat = create_quat(np.random.rand() * 2 * np.pi, 0, 0, 1, is_radian=True)
                     init_xy_rover = self.get_goal_xy_position(self.current_goal - 1)
-                    self.set_state(np.asarray([init_xy_rover[0], init_xy_rover[1], 0.2, *quat, *self.init_qpos[7:]]), self.init_qvel)
+                    self.set_state(np.asarray([init_xy_rover[0], init_xy_rover[1], 0.2, *quat, *self.init_qpos[7:]]),
+                                   self.init_qvel)
 
-                print(colorize("starting at {}".format('init_pos' if self.current_goal == 0 else 'goal {}'.format(self.current_goal-1)), 'cyan', bold=False))
+                print(colorize("starting at {}".format(
+                    'init_pos' if self.current_goal == 0 else 'goal {}'.format(self.current_goal - 1)), 'cyan',
+                    bold=False))
 
         print(colorize('current_goal: {}'.format(self.current_goal), 'yellow', bold=False))
 
         # self.just_reached_goal = False
         gps_exact, ob, img = self._get_obs()
-        self.x_before = self.data.qpos[0:2].copy() + self.gps_error * np.random.rand(2)
+        self.x_before = self.data.qpos[0:2].copy() + self.sensors_error * np.random.rand(2)
 
         self.last_15_pos = np.array([3, 3])
         self.last_15_time = 0
@@ -601,10 +625,10 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
         return obs, dict(current_goal=self.current_goal)
 
     def reset(
-        self,
-        *,
-        seed: Optional[int] = None,
-        options: Optional[dict] = None,
+            self,
+            *,
+            seed: Optional[int] = None,
+            options: Optional[dict] = None,
     ):
         gymnasium.core.Env.reset(self, seed=seed)
 
@@ -614,6 +638,7 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
         if self.render_mode == "human":
             self.render()
         return ob, info
+
     def map_generator(self):
         # distribute hole fillers in original field
         if self.original_field:
@@ -654,10 +679,11 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
                 try:
                     field_ = fields.pop()
                 except:
-                    print("trying to remove ",i,"th field")
+                    print("trying to remove ", i, "th field")
                     print("rs size is: ", rs_size)
                 self.model.body_pos[ramp_] = np.asarray(
-                    [init_field_pos[0] + field_[0] * 11.0 + x, init_field_pos[1] + field_[1] * 5.0 + y, 0.0],dtype=object)
+                    [init_field_pos[0] + field_[0] * 11.0 + x, init_field_pos[1] + field_[1] * 5.0 + y, 0.0],
+                    dtype=object)
                 if ramp_ not in self.ramp_used:
                     self.ramp_used.append(ramp_)
                 orient = np.random.choice([0, 1, 2, 3])
@@ -913,22 +939,21 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
         self.end_after_current_goal = True
         return 0
 
+
 def create_quat(angle, x, y, z, is_radian=True):
     dir = np.array([x, y, z])
-    dir = dir/np.linalg.norm(dir)
+    dir = dir / np.linalg.norm(dir)
     if is_radian:
         return np.array([np.cos(angle / 2), *(dir * np.sin(angle / 2))])
     else:
-        angle = angle*np.pi/180
+        angle = angle * np.pi / 180
         return np.array([np.cos(angle / 2), *(dir * np.sin(angle / 2))])
 
 
 def axisangle_from_quat(quat):
-    angle_rad = 2*np.arccos(quat[0])
-    dir = quat[1:]/(np.arc(2*angle_rad))
+    angle_rad = 2 * np.arccos(quat[0])
+    dir = quat[1:] / (np.arc(2 * angle_rad))
     return (angle_rad, dir)
-
-
 
 
 # THIS COLORIZE FUNCTION WAS COPIED FROM SPINUP.UTILS.LOGX FILE # https://github.com/openai/spinningup/blob/master/spinup/utils/logx.py
@@ -943,6 +968,7 @@ color2num = dict(
     white=37,
     crimson=38
 )
+
 
 def colorize(string, color, bold=False, highlight=False):
     """
