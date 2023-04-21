@@ -146,12 +146,12 @@ class HumanOutputFormat4Rover(HumanOutputFormat):
                 key_width.append(max([len(elem[0]) for elem in tag_separated_key2str[tag]]))
                 val_width.append(max([len(elem[1]) for elem in tag_separated_key2str[tag]]))
        # Write out the data
-        dashes = "-" * (sum(key_width) + sum(val_width) + len(tags)*7-1)
+        dashes = "-" * (sum(key_width) + sum(val_width) + len(tags)*8-1)
         lines = [dashes]
         header = '||'
         for tag in range(len(tags)):
             tag_space = " " * (key_width[tag] + val_width[tag] - len(tags[tag]))
-            header += f" {tags[tag]}{tag_space}   ||"
+            header += f" {tags[tag]}{tag_space}    ||"
         lines.append(header)
         lines.append(dashes)
         longer_len = max([len(tag_separated_key2str[tag]) for tag in tags])
@@ -166,7 +166,7 @@ class HumanOutputFormat4Rover(HumanOutputFormat):
                     value = ''
                 key_space = " " * (key_width[tag] - len(key))
                 val_space = " " * (val_width[tag] - len(value))
-                line += f" {key}{key_space} | {value}{val_space}||"
+                line += f" {key}{key_space} | {value}{val_space} ||"
             lines.append(line)
         lines.append(dashes)
 
