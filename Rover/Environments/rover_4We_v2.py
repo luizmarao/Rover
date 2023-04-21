@@ -128,6 +128,8 @@ from typing import Optional, Union
 # Na configuração B, os elementos (1, 2) e (3, 2) tem obstáculos
 
 class RoverRobotrek4Wev2Env(MujocoEnv, utils.EzPickle):
+    model_file_name = 'main-trekking-challenge-4wheels_diff-acker-double-front-wheel.xml'
+
     step_counter = 0
     # EXPERIMENTS LOG PARAMETERS #
     original_field = False
@@ -235,7 +237,7 @@ class RoverRobotrek4Wev2Env(MujocoEnv, utils.EzPickle):
         model_path = os.path.join(os.path.dirname(__file__), 'assets', 'Rover4We')
         MujocoEnv.__init__(
             self,
-            model_path=os.path.join(model_path, 'main-trekking-challenge-4wheels_diff-acker-double-front-wheel.xml'),
+            model_path=os.path.join(model_path, self.model_file_name),
             frame_skip=4,
             observation_space=observation_space,
             **kwargs,
