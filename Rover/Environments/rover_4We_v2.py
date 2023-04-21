@@ -292,7 +292,7 @@ class RoverRobotrek4Wev2Env(MujocoEnv, utils.EzPickle):
 
     def format_obs(self, lin_obs, img_obs):
         if self.vectorized_obs:
-            img = np.reshape(img_obs, (self.img_reduced_size[0] * self.img_reduced_size[1]))
+            img = np.ndarray.flatten(img_obs)
             lin = lin_obs
             return np.concatenate([lin, img])
         else:
