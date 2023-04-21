@@ -232,7 +232,7 @@ class RoverRobotrek4Wev2Env(MujocoEnv, utils.EzPickle):
                                        dtype=np.float64)
         if self.random_current_goal:
             self.randomize_current_goal()
-        model_path = os.path.join(os.path.dirname(__file__), 'assets', 'Rover4We-v1')
+        model_path = os.path.join(os.path.dirname(__file__), 'assets', 'Rover4We')
         MujocoEnv.__init__(
             self,
             model_path=os.path.join(model_path, 'main-trekking-challenge-4wheels_diff-acker-double-front-wheel.xml'),

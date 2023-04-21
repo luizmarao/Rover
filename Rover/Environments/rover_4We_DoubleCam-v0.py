@@ -133,7 +133,7 @@ class RoverRobotrek4Wev2Env(RoverRobotrek4Wev2Env):
             self.randomize_current_goal()
 
         MujocoEnv.__init__(self,
-                           'Rover4We-v1/main-trekking-challenge-4wheels_diff-acker-double-front-wheel-2cam.xml',
+                           'Rover4We/main-trekking-challenge-4wheels_diff-acker-double-front-wheel-2cam.xml',
                            4)
         utils.EzPickle.__init__(self)
 
