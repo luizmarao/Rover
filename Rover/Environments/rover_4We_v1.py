@@ -148,14 +148,6 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
     time_pnlt = 0.00012
     leave_penalty = 10
 
-    # TODO: COLISION DETECTION NOT WORKING PROPERLY. SET HIGH VALUES TO AVOID
-    # max_accxy = 100.0
-    # max_accz = 50.0
-    max_accxy = 500.0
-    max_accz = 500.0
-    colision_penalty = 10
-    bumpiness_penalty = 1
-
     circle_pnlt = 10
     flip_pnlt = 10
     goal_rwd = 1
@@ -470,19 +462,6 @@ class RoverRobotrek4Wev1Env(MujocoEnv, utils.EzPickle):
                 # print('dead: ficou muito tempo parado. death time:', current_time)
 
         return last_position, last_time, done, circle_penalty
-
-    def colision_detector(self, max_accxy, max_accz):
-        acc_vec = self.data.qacc[:3] # [ax, ay, az]
-        accxy = np.sqrt(acc_vec[0]**2 + acc_vec[1]**2)
-        daccz = np.abs(acc_vec[2])
-        if accxy >= max_accxy:
-            print("Colisao detectada: {}".format(accxy))
-            return True, False
-        elif daccz >= self.max_accz:
-            print("Buraqueira detectada: {}".format(daccz))
-            return False, True
-        else:
-            return False, False
 
     def is_in_goal(self, gps_exact):
         on_base, n_spot = self.line_reader(gps_exact)
