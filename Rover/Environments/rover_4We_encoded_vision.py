@@ -22,4 +22,4 @@ class Rover4WeEncodedVisionv0Env(RoverRobotrek4Wev2Env):
         return flatten
 
     def format_obs(self, lin_obs, img_obs):
-        return np.asarray([lin_obs, img_obs])
+        return np.concatenate([lin_obs, img_obs])
