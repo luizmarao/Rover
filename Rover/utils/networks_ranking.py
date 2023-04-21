@@ -20,12 +20,12 @@ class RoverRankingSystem:
     2 for all times network leaves/enters a ranking
     '''
     def __init__(self, networks_limit_per_ranking: int = 20, num_rankings: int = 3,
-                 save_path: str = None, networks_subfolder: str = None, verbose: int = 0):
+                 save_path: str = None, networks_subfolder: str = 'saved_networks', verbose: int = 0):
         self.num_rankings = num_rankings
         self.networks_limit_per_ranking = networks_limit_per_ranking
         self.rankings = [[] for i in range(num_rankings)]
         self.save_path = save_path
-        self.networks_subfolder = networks_subfolder
+        self.networks_subfolder = networks_subfolder or 'saved_networks'
         self.verbose = verbose
 
     class Network:
@@ -69,7 +69,7 @@ class RoverRankingSystem:
                         print("Network {} left all rankings.".format(del_net.iteration))
                     if self.save_path is not None:  # Network's file must be removed
                         print("Deleting saved network {}".format(del_net.iteration))
-                        os.remove(osp.join(self.save_path, self.networks_subfolder, '%.5i.zip' % del_net.iteration))  #TODO: Fix in case of None for any arg in join
+                        os.remove(osp.join(self.save_path, self.networks_subfolder, '%.5i.zip' % del_net.iteration))
         if ranks_changed and self.save_path is not None:
             return True
         else:
