@@ -117,27 +117,37 @@ import cv2
 from gymnasium import utils
 from gymnasium.envs.mujoco import MujocoEnv
 from gymnasium import spaces
-#import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import mujoco
 import os
 from Rover.Environments.rover_4We_v2 import RoverRobotrek4Wev2Env
+
 
 # O campo tem dimensoes (x,y)=(44,25) [metros]
 # É uma matriz (x,y) de (0,0) até (3, 4) elementos, em que cada elemento tem dimensão (x,y) de (44/4, 25/5) = (11.0 , 5.0) [metros]
 # Na configuração A, os elementos (2, 1) e (2, 3) tem obstáculos
 # Na configuração B, os elementos (1, 2) e (3, 2) tem obstáculos
 
-
 class Rover4WeDoubleCameraPackedv0Env(RoverRobotrek4Wev2Env):
-    def __init__(self, **kwargs):
-        self.model_file_name = 'main-trekking-challenge-4wheels_diff-acker-double-front-wheel-2cam.xml'
-        self.observation_space_size = 2*np.product(self.img_reduced_size) + 14
-        self.camera_r = 'first-person-r'
-        self.camera_l = 'first-person-l'
-        super().__init__(**kwargs)
+
+    def make_env_observation_space(self):
+        self.observation_space_size = 2 * np.product(self.img_reduced_size) + 14
+        return spaces.Box(low=-np.inf, high=np.inf, shape=(self.observation_space_size,), dtype=np.float64)
+
     def camera_rendering(self):
-        gray_normalized_img_r = super().camera_rendering(camera_name='first-person-r',extra_img_name='r_')
+        gray_normalized_img_r = super().camera_rendering(camera_name='first-person-r', extra_img_name='r_')
         gray_normalized_img_l = super().camera_rendering(camera_name='first-person-l', extra_img_name='l_')
         packed_normalized_gray = np.dstack((gray_normalized_img_l, gray_normalized_img_r))
-        return packed_normalized_gray / 255.0
+        return packed_normalized_gray
 
+
+class Rover4WeDoubleCameraFusedv0Env(Rover4WeDoubleCameraPackedv0Env):
+
+    def make_env_observation_space(self):
+        self.observation_space_size = np.product(self.img_reduced_size) + 14
+        return spaces.Box(low=-np.inf, high=np.inf, shape=(self.observation_space_size,), dtype=np.float64)
+
+    def camera_rendering(self):
+        packed_normalized_gray = super().camera_rendering()
+        fused_normalized_gray = np.mean(packed_normalized_gray, keepdims=False, axis=2)
+        return fused_normalized_gray
