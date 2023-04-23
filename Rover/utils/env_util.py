@@ -2,6 +2,8 @@ import os
 from typing import Any, Callable, Dict, Optional, Type, Union
 
 import gymnasium as gym
+from gymnasium.envs.mujoco import MujocoEnv
+from gymnasium.spaces import Space
 
 from Rover.utils.monitor import RoverMonitor
 from stable_baselines3.common.utils import compat_gym_seed
@@ -97,3 +99,32 @@ def make_vec_env(
         vec_env_cls = DummyVecEnv
 
     return vec_env_cls([make_env(i + start_index) for i in range(n_envs)], **vec_env_kwargs)
+
+
+class RoverMujocoEnv(MujocoEnv):
+
+    def __init__(
+            self,
+            model_path,
+            frame_skip,
+            observation_space: Space,
+            render_mode: Optional[str] = None,
+            width: int = 470,
+            height: int = 280,
+            camera_id: Optional[int] = None,
+            camera_name: Optional[str] = None,
+            default_camera_config: Optional[dict] = None,
+            **kwargs
+    ):
+        super().__init__(
+            model_path=model_path,
+            frame_skip=frame_skip,
+            observation_space=observation_space,
+            render_mode=render_mode,
+            width=width,
+            height=height,
+            camera_id=camera_id,
+            camera_name=camera_name,
+            default_camera_config=default_camera_config
+        )
+

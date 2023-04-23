@@ -119,7 +119,8 @@ from gymnasium.envs.mujoco import MujocoEnv
 from gymnasium import spaces
 import mujoco
 import os
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
+from Rover.utils.env_util import RoverMujocoEnv
 
 
 # O campo tem dimensoes (x,y)=(44,25) [metros]
@@ -127,33 +128,10 @@ from typing import Optional, Union
 # Na configuração A, os elementos (2, 1) e (2, 3) tem obstáculos
 # Na configuração B, os elementos (1, 2) e (3, 2) tem obstáculos
 
-class RoverRobotrek4Wev2Env(MujocoEnv, utils.EzPickle):
+class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
     model_file_name = 'main-trekking-challenge-4wheels_diff-acker-double-front-wheel.xml'
 
     step_counter = 0
-    # EXPERIMENTS LOG PARAMETERS #
-    original_field = False
-    use_ramps = True
-    use_posts = True
-    vectorized_obs = True
-    flip_penalising = True
-    flipped_time = 2.0
-    death_circle_penalising = True
-    death_circ_dist = 0.8
-    death_circ_time = 8
-    fwd_rew = 0.1
-    control_cost = 0.0007
-    svv_rew = 0.0001
-    time_pnlt = 0.00012
-    leave_penalty = 10
-
-    circle_pnlt = 10
-    flip_pnlt = 10
-    goal_rwd = 1
-    sensors_error = 0.00  # Magnitude of randomized gaussian error over position and/or speed sensor
-    im_size = (440, 270)  # tamanho da imagem adquirida pelo mujoco
-    img_reduced_size = (32, 32)  # tamanho da imagem reduzida
-    observation_space_size = np.product(img_reduced_size) + 14
 
     '''
     About start_at_initpos, random_start(rs), random_current_goal(rcg) and force goal:
@@ -165,27 +143,17 @@ class RoverRobotrek4Wev2Env(MujocoEnv, utils.EzPickle):
     rs False and rcg False: rover starts at the goal before its current_goal (and this one is the first goal: 0)
     force_goal -1 will not make anything, 0/1/2 will force goal to be 0/1/2
     '''
-    start_at_initpos = False
-    force_goal = -1
-    random_start = False
-    random_current_goal = True
-    avoid_radius = 0.5  # radius for obstacle avoidance in rover's position randomizer
-
-    # defines if the episode will end after current_goal is reached
-    end_after_current_goal = True
 
     current_obstacle_setup = None
     current_goal = 0  # inicializa a variável do objetivo atual
     x_before = [0, 0]  # Inicializa o vetor estado do carrinho [posição, orientação]
-    is_cam = False
+
     last_15_pos = np.array([3, 3])
     last_15_time = 0
     last_straight_time = 0
 
     initial_pos_A = ((22.5, 15.5, 0), (22.5, 5.5, 0))
     initial_pos_B = ((11.5, 10.5, 0), (33.5, 10.5, 0))
-
-    # block_step = 1
 
     long_bump_storage = []
     long_bump_used = []
@@ -214,11 +182,6 @@ class RoverRobotrek4Wev2Env(MujocoEnv, utils.EzPickle):
                           box_tile_storage,
                           ramp_storage, post_storage]
 
-    camera_renderer = None
-    camera_id = None
-    flag_render = False
-    save_images = False
-
     reseted = False  # a flag for the first step after a reset, to send new goal flag in info dict
 
     metadata = {
@@ -230,12 +193,69 @@ class RoverRobotrek4Wev2Env(MujocoEnv, utils.EzPickle):
         "render_fps": 25,
     }
 
-    def __init__(self, **kwargs):
-        observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.observation_space_size,),
-                                       dtype=np.float64)
+    def __init__(
+            self,
+            use_ramps: bool = True,
+            use_posts: bool = True,
+            vectorized_obs: bool = True,
+            flip_penalising: bool = True,
+            flipped_time: float = 2.0,
+            death_circle_penalising: bool = True,
+            death_circ_dist: float = 0.8,
+            death_circ_time: float = 8,
+            fwd_rew: float = 0.1,
+            control_cost: float = 0.0007,
+            svv_rew: float = 0.0001,
+            time_pnlt: float = 0.00012,
+            leave_penalty: float = 10,
+            circle_pnlt: float = 10,
+            flip_pnlt: float = 10,
+            goal_rwd: float = 1,
+            sensors_error: float = 0.00,
+            im_size: Tuple[int] = (440, 270),
+            img_reduced_size: Tuple[int] = (32, 32),
+            start_at_initpos: bool = False,
+            force_goal: int = -1,
+            random_start: bool = False,
+            random_current_goal: bool = True,
+            avoid_radius: float = 0.5,
+            end_after_current_goal: bool = True,
+            save_images: bool = False,
+            verbose: int = 0,
+            **kwargs
+    ):
+        self.use_ramps = use_ramps
+        self.use_posts = use_posts
+        self.vectorized_obs = vectorized_obs
+        self.flip_penalising = flip_penalising
+        self.flipped_time = flipped_time
+        self.death_circle_penalising = death_circle_penalising
+        self.death_circ_dist = death_circ_dist
+        self.death_circ_time = death_circ_time
+        self.fwd_rew = fwd_rew
+        self.control_cost = control_cost
+        self.svv_rew = svv_rew
+        self.time_pnlt = time_pnlt
+        self.leave_penalty = leave_penalty
+        self.circle_pnlt = circle_pnlt
+        self.flip_pnlt = flip_pnlt
+        self.goal_rwd = goal_rwd
+        self.sensors_error = sensors_error
+        self.im_size = im_size
+        self.img_reduced_size = img_reduced_size
+        self.start_at_initpos = start_at_initpos
+        self.force_goal = force_goal
+        self.random_start = random_start
+        self.random_current_goal = random_current_goal
+        self.avoid_radius = avoid_radius
+        self.end_after_current_goal = end_after_current_goal
+        self.save_images = save_images
+        self.verbose = verbose
+
+        observation_space = self.make_env_observation_space()
 
         model_path = os.path.join(os.path.dirname(__file__), 'assets', 'Rover4We')
-        MujocoEnv.__init__(
+        RoverMujocoEnv.__init__(
             self,
             model_path=os.path.join(model_path, self.model_file_name),
             frame_skip=4,
@@ -245,7 +265,14 @@ class RoverRobotrek4Wev2Env(MujocoEnv, utils.EzPickle):
         utils.EzPickle.__init__(self)
         self.env_config()
 
+    def make_env_observation_space(self):
+        self.observation_space_size = np.product(self.img_reduced_size) + 14
+        return spaces.Box(low=-np.inf, high=np.inf, shape=(self.observation_space_size,), dtype=np.float64)
+
     def env_config(self):
+        if self.save_images:
+            self.save_images_path = os.path.join(os.environ["SB3_LOGDIR"], "running_images/") or "./running_images/"
+            os.makedirs(self.save_images_path, exist_ok=True)
         if self.random_current_goal:
             self.randomize_current_goal()
         self.body_names = [self.model.body(i).name for i in range(self.model.nbody)]
@@ -276,18 +303,16 @@ class RoverRobotrek4Wev2Env(MujocoEnv, utils.EzPickle):
                 self.post_storage.append(self.body_name2id(body))
 
         self.holes = np.zeros((2, 11, 5))
-        self.map_generator()
-        self.camera_id = self.camera_name2id('first-person')
 
     def camera_rendering(self, camera_name='first-person', extra_img_name=''):  # TODO: fix path for image saving
         img = self.mujoco_renderer.render("rgb_array", camera_name='first-person')
-        if self.save_images: cv2.imwrite("./running_images/full_size_{}{:0>7.3f}.png".format(extra_img_name, self.data.time),
+        if self.save_images: cv2.imwrite(self.save_images_path + "full_size_{}{:0>7.3f}.png".format(extra_img_name, self.data.time),
                                          cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
         img = cv2.resize(img, self.img_reduced_size)
         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        if self.save_images: cv2.imwrite("./running_images/reduced_size_{}{:0>7.3f}.png".format(extra_img_name, self.data.time),
+        if self.save_images: cv2.imwrite(self.save_images_path + "reduced_size_{}{:0>7.3f}.png".format(extra_img_name, self.data.time),
                                          cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-        if self.save_images: cv2.imwrite("./running_images/reduced_gray_{}{:0>7.3f}.png".format(extra_img_name, self.data.time), gray)
+        if self.save_images: cv2.imwrite(self.save_images_path + "reduced_gray_{}{:0>7.3f}.png".format(extra_img_name, self.data.time), gray)
         return gray / 255.0
 
     def format_obs(self, lin_obs, img_obs):
