@@ -27,6 +27,7 @@ class RoverRankingSystem:
         self.save_path = save_path
         self.networks_subfolder = networks_subfolder or 'saved_networks'
         self.verbose = verbose
+        os.makedirs(os.path.join(self.save_path, self.networks_subfolder), exist_ok=True)
 
     class Network:
         def __init__(self, iteration: int, performance_list: List):
