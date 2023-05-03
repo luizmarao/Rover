@@ -1,24 +1,20 @@
-import os
-import sys
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, TypeVar, Union
 import io
+import os
 import pathlib
-from stable_baselines3.common.save_util import recursive_getattr, save_to_zip_file
-from stable_baselines3.ppo.ppo import PPO
-import warnings
-from typing import Any, Dict, Optional, Type, TypeVar, Union
+import sys
 import time
+from typing import Any, Dict, Optional, Type, TypeVar, Union
+from typing import Iterable
 
 import numpy as np
 import torch as th
-from gymnasium import spaces
+from stable_baselines3.common.policies import ActorCriticPolicy
+from stable_baselines3.common.save_util import recursive_getattr, save_to_zip_file
+from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
+from stable_baselines3.common.utils import explained_variance, safe_mean
+from stable_baselines3.ppo.ppo import PPO
 from torch.nn import functional as F
 
-from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
-from stable_baselines3.common.policies import ActorCriticCnnPolicy, ActorCriticPolicy, BasePolicy, \
-    MultiInputActorCriticPolicy
-from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
-from stable_baselines3.common.utils import explained_variance, get_schedule_fn, obs_as_tensor, safe_mean
 from Rover.utils.networks_ranking import RoverRankingSystem
 
 SelfPPO = TypeVar("SelfPPO", bound="PPO")
