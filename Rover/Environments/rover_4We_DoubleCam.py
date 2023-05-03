@@ -126,7 +126,7 @@ class Rover4WeDoubleCameraPackedv0Env(RoverRobotrek4Wev2Env):
     def camera_rendering(self):
         gray_normalized_img_r = super().camera_rendering(camera_name='first-person-r', extra_img_name='r_')
         gray_normalized_img_l = super().camera_rendering(camera_name='first-person-l', extra_img_name='l_')
-        packed_normalized_gray = np.dstack((gray_normalized_img_l, gray_normalized_img_r))
+        packed_normalized_gray = np.stack((gray_normalized_img_l, gray_normalized_img_r))
         return packed_normalized_gray
 
 
