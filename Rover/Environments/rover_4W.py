@@ -1,3 +1,39 @@
+'''
+Arquivo de configuração do ambient rover4W do mujoco
+
+Baseado em: https://github.com/openai/gym/tree/master/gym/envs/mujoco
+
+qpos and qvel
+
+qpos[0] = rover's x position
+qpos[1] = rover's y position
+qpos[2] = rover's z position
+qpos[3] = rover's w quaternion vector
+qpos[4] = rover's a quaternion vector
+qpos[5] = rover's b quaternion vector
+qpos[6] = rover's c quaternion vector
+qpos[7] = rear left wheel rotation angle
+qpos[8] = rear right wheel rotation angle
+qpos[9] = steer-bar rotation angle
+qpos[10]= front left wheel rotation angle
+qpos[11]= front right wheel rotation angle
+qpos[12]= drive motor rotation angle (the prism between rear wheels)
+
+qvel[0] = rover's x velocity
+qvel[1] = rover's y velocity
+qvel[2] = rover's z velocity
+qvel[3] = rover's x angular velocity
+qvel[4] = rover's y angular velocity
+qvel[5] = rover's z angular velocity
+qvel[6] = rear left wheel angular velocity
+qvel[7] = rear right wheel angular velocity
+qvel[8] = steer-bar angular velocity
+qvel[9]= front left wheel angular velocity
+qvel[10]= front right wheel angular velocity
+qvel[11]= drive motor angular velocity (the prism between rear wheels)
+
+'''
+
 import numpy as np
 from gymnasium import spaces
 from gymnasium import utils
@@ -5,6 +41,7 @@ from Rover.Environments.rover_4We_v2 import RoverRobotrek4Wev2Env
 import mujoco
 from Rover.utils.env_util import RoverMujocoEnv
 import os
+
 
 class Rover4Wv1Env(RoverRobotrek4Wev2Env):
     model_file_name = 'main-trekking-challenge-4wheels_diff-acker-double-front-wheel-no-cam.xml'
@@ -18,13 +55,13 @@ class Rover4Wv1Env(RoverRobotrek4Wev2Env):
             death_circ_dist: float = 0.8,
             death_circ_time: float = 8,
             fwd_rew: float = 0.1,
-            control_cost: float = 0.0007,
+            control_cost: float = 0.001,
             svv_rew: float = 0.0001,
-            time_pnlt: float = 0.00012,
+            time_pnlt: float = 0.0,
             leave_penalty: float = 10,
             circle_pnlt: float = 10,
             flip_pnlt: float = 10,
-            goal_rwd: float = 1,
+            goal_rwd: float = 0.0,
             sensors_error: float = 0.00,
             start_at_initpos: bool = False,
             force_goal: int = -1,
@@ -32,7 +69,6 @@ class Rover4Wv1Env(RoverRobotrek4Wev2Env):
             random_current_goal: bool = True,
             avoid_radius: float = 0.5,
             end_after_current_goal: bool = True,
-            save_images: bool = False,
             verbose: int = 0,
             **kwargs
     ):
@@ -152,6 +188,7 @@ class Rover4Wv1Env(RoverRobotrek4Wev2Env):
         obs = self.format_obs(ob, img)
         return obs, dict(current_goal=self.current_goal)
 
+
 def create_quat(angle, x, y, z, is_radian=True):
     dir = np.array([x, y, z])
     dir = dir / np.linalg.norm(dir)
@@ -166,6 +203,7 @@ def axisangle_from_quat(quat):
     angle_rad = 2 * np.arccos(quat[0])
     dir = quat[1:] / (np.arc(2 * angle_rad))
     return (angle_rad, dir)
+
 
 # THIS COLORIZE FUNCTION WAS COPIED FROM SPINUP.UTILS.LOGX FILE # https://github.com/openai/spinningup/blob/master/spinup/utils/logx.py
 color2num = dict(
