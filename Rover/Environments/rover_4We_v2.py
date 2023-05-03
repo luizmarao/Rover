@@ -305,7 +305,7 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
         self.holes = np.zeros((2, 11, 5))
 
     def camera_rendering(self, camera_name='first-person', extra_img_name=''):  # TODO: fix path for image saving
-        img = self.mujoco_renderer.render("rgb_array", camera_name='first-person')
+        img = self.mujoco_renderer.render("rgb_array", camera_name=camera_name)
         if self.save_images: cv2.imwrite(self.save_images_path + "full_size_{}{:0>7.3f}.png".format(extra_img_name, self.data.time),
                                          cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
         img = cv2.resize(img, self.img_reduced_size)
