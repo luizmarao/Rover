@@ -345,7 +345,7 @@ class PPO_Rover(PPO):
         maxEpRet = np.nan if len(r) == 0 else np.max(r)
         deaths = 0
         for epinfo in epinfobuf:
-            if epinfo.get("death") is not None or epinfo.get("timeout") is not None:
+            if epinfo.get("death") is not None:
                 deaths += 1
         goal_episodes = [0, 0, 0]
         goal_reached_episodes = [0, 0, 0]
