@@ -69,7 +69,8 @@ class RoverRankingSystem:
                     if self.verbose >= 1:
                         print("Network {} left all rankings.".format(del_net.iteration))
                     if self.save_path is not None:  # Network's file must be removed
-                        print("Deleting saved network {}".format(del_net.iteration))
+                        if self.verbose >= 1:
+                            print("Deleting saved network {}".format(del_net.iteration))
                         os.remove(osp.join(self.save_path, self.networks_subfolder, '%.5i.zip' % del_net.iteration))
         if ranks_changed and self.save_path is not None:
             return True
