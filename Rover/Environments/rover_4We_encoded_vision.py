@@ -1,9 +1,12 @@
-from Rover.Environments.rover_4We_v2 import RoverRobotrek4Wev2Env
-import keras
 import os
+from typing import Tuple
+
+import keras
 import numpy as np
 from gymnasium import spaces
-from typing import Optional, Union, Tuple
+
+from Rover.Environments.rover_4We_v2 import RoverRobotrek4Wev2Env
+
 
 class Rover4WeEncodedVisionv0Env(RoverRobotrek4Wev2Env):
     def __init__(
