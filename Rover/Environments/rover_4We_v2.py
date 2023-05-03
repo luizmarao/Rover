@@ -205,7 +205,7 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
             death_circ_time: float = 8,
             fwd_rew: float = 0.1,
             control_cost: float = 0.0007,
-            svv_rew: float = 0.0001,
+            svv_rew: float = 0.0,
             time_pnlt: float = 0.00012,
             leave_penalty: float = 10,
             circle_pnlt: float = 10,
@@ -354,7 +354,7 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
         ctrl_cost = self.control_cost * np.square(action[1])
 
         # Cálculo da reward de sobrevivência
-        # survive_reward = self.svv_rew
+        survive_reward = self.svv_rew
         time_cost = self.time_pnlt
 
         # Atualiza o vetor de estado do carrinho
@@ -381,8 +381,7 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
                 self.model.light_active[1] = 0
 
         # Soma todas as rewards e custos
-        # r = survive_reward + forward_reward - ctrl_cost + goal_reward
-        r = forward_reward - ctrl_cost - time_cost + goal_reward  # + self.svv_rew
+        r = forward_reward - ctrl_cost - time_cost + goal_reward + survive_reward
 
         # Atualização da reward caso o carrinho termine a prova ou de penalidades caso o carrinho deixe o campo (dá pra tacar numa função isso aqui)
         if self.current_goal == -1:
