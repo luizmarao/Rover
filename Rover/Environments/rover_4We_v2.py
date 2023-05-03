@@ -108,15 +108,16 @@ qvel[13]= front right wheel rolling angular velocity
 
 '''
 
-import numpy as np
+import os
+from typing import Optional, Tuple
+
 import cv2
 import gymnasium
-from gymnasium import utils
-from gymnasium.envs.mujoco import MujocoEnv
-from gymnasium import spaces
 import mujoco
-import os
-from typing import Optional, Union, Tuple
+import numpy as np
+from gymnasium import spaces
+from gymnasium import utils
+
 from Rover.utils.env_util import RoverMujocoEnv
 
 
