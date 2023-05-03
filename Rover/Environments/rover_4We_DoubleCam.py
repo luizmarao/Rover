@@ -118,7 +118,7 @@ from Rover.Environments.rover_4We_v2 import RoverRobotrek4Wev2Env
 
 
 class Rover4WeDoubleCameraPackedv0Env(RoverRobotrek4Wev2Env):
-
+    model_file_name = 'main-trekking-challenge-4wheels_diff-acker-double-front-wheel-2cam.xml'
     def make_env_observation_space(self):
         self.observation_space_size = 2 * np.product(self.img_reduced_size) + 14
         return spaces.Box(low=-np.inf, high=np.inf, shape=(self.observation_space_size,), dtype=np.float64)
@@ -131,12 +131,12 @@ class Rover4WeDoubleCameraPackedv0Env(RoverRobotrek4Wev2Env):
 
 
 class Rover4WeDoubleCameraFusedv0Env(Rover4WeDoubleCameraPackedv0Env):
-
+    model_file_name = 'main-trekking-challenge-4wheels_diff-acker-double-front-wheel-2cam.xml'
     def make_env_observation_space(self):
         self.observation_space_size = np.product(self.img_reduced_size) + 14
         return spaces.Box(low=-np.inf, high=np.inf, shape=(self.observation_space_size,), dtype=np.float64)
 
     def camera_rendering(self):
         packed_normalized_gray = super().camera_rendering()
-        fused_normalized_gray = np.mean(packed_normalized_gray, keepdims=False, axis=2)
+        fused_normalized_gray = np.mean(packed_normalized_gray, keepdims=False, axis=0)
         return fused_normalized_gray
