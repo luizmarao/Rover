@@ -126,7 +126,7 @@ while(True):
             print_colored(RED, '--list-columns, -xaxis XAXIS, --smooth WINDOW_SIZE, --title TITLE, --xlabel XLABEL, --ylabel YLABEL, --xmax XMAX' + ', --'.join(fields))
             exit(1)
 
-        xlabel = 'misc/total_timesteps'
+        xlabel = 'time/total_timesteps'
         smooth_window = 1
         selected_fields = ['eprewmean']
         is_selecting_fields = False
