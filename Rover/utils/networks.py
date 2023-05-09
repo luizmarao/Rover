@@ -24,7 +24,7 @@ class RovernetClassic(BaseFeaturesExtractor):
         self.cnn = nn.Sequential()
         channels = self.n_input_channels
         for (filters, size, stride) in conv_layers:
-            self.cnn.append(nn.Conv2d(channels, filters, kernel_size=size, stride=stride, padding=0))
+            self.cnn.append(nn.Conv2d(channels, filters, kernel_size=size, stride=stride, padding='valid'))
             self.cnn.append(nn.ReLU())
             channels = filters
 
@@ -32,21 +32,26 @@ class RovernetClassic(BaseFeaturesExtractor):
 
         # Compute shape by doing one forward pass
         with th.no_grad():
-            img = observation_space.sample()[dynamic_obs_size:].reshape((self.n_input_channels, img_red_size[0], img_red_size[1]))[None]
+            img = observation_space.sample()[dynamic_obs_size:].reshape(
+                (self.n_input_channels, img_red_size[0], img_red_size[1]))[None]
             n_flatten = self.cnn(
                 th.as_tensor(img).float()
             ).shape[1]
 
         self.linear = nn.Sequential()
         if lin_layers is not None:
-            input_ = n_flatten+dynamic_obs_size
+            input_ = n_flatten + dynamic_obs_size
             for size in lin_layers:
                 self.linear.append(nn.Linear(input_, size))
                 self.linear.append(nn.Tanh())
                 input_ = size
+            self._features_dim = input_
+        else:
+            self._features_dim = n_flatten + dynamic_obs_size
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
-        images = observations[:, self.dynamic_obs_size:].reshape((-1, self.n_input_channels, self.img_red_size[0], self.img_red_size[1]))
+        images = observations[:, self.dynamic_obs_size:].reshape(
+            (-1, self.n_input_channels, self.img_red_size[0], self.img_red_size[1]))
         dynamics = observations[:, :self.dynamic_obs_size]
         return self.linear(th.concat((self.cnn(images), dynamics), axis=1))
 
