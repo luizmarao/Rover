@@ -178,3 +178,10 @@ class HumanOutputFormat4Rover(HumanOutputFormat):
 
         # Flush the output to the file
         self.file.flush()
+
+def safe_print(string):
+    if tqdm is not None:
+        # Do not mess up with progress bar
+        tqdm.write(string + "\n", file=sys.stdout, end="")
+    else:
+        print(string)
