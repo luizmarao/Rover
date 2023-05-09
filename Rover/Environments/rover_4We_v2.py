@@ -119,7 +119,7 @@ from gymnasium import spaces
 from gymnasium import utils
 
 from Rover.utils.env_util import RoverMujocoEnv
-
+from Rover.utils.logger import safe_print
 
 # O campo tem dimensoes (x,y)=(44,25) [metros]
 # É uma matriz (x,y) de (0,0) até (3, 4) elementos, em que cada elemento tem dimensão (x,y) de (44/4, 25/5) = (11.0 , 5.0) [metros]
@@ -130,7 +130,8 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
     model_file_name = 'main-trekking-challenge-4wheels_diff-acker-double-front-wheel.xml'
 
     step_counter = 0
-
+    reward_sum = 0
+    reward_discounted_sum = 0
     '''
     As this environment presents several calculations and objects, it SHOULD NOT be vectorized with DummyVecEnv.
     
@@ -210,7 +211,7 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
             leave_penalty: float = 10,
             circle_pnlt: float = 10,
             flip_pnlt: float = 10,
-            goal_rwd: float = 1,
+            goal_rwd: float = 10,
             sensors_error: float = 0.00,
             im_size: Tuple[int] = (440, 270),
             img_reduced_size: Tuple[int] = (32, 32),
@@ -219,6 +220,7 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
             random_start: bool = False,
             random_current_goal: bool = True,
             avoid_radius: float = 0.5,
+            gamma: float = 1,
             end_after_current_goal: bool = True,
             save_images: bool = False,
             verbose: int = 0,
@@ -248,6 +250,7 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
         self.random_start = random_start
         self.random_current_goal = random_current_goal
         self.avoid_radius = avoid_radius
+        self.gamma = gamma
         self.end_after_current_goal = end_after_current_goal
         self.save_images = save_images
         self.verbose = verbose
@@ -306,13 +309,16 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
 
     def camera_rendering(self, camera_name='first-person', extra_img_name=''):  # TODO: fix path for image saving
         img = self.mujoco_renderer.render("rgb_array", camera_name=camera_name)
-        if self.save_images: cv2.imwrite(self.save_images_path + "full_size_{}{:0>7.3f}.png".format(extra_img_name, self.data.time),
-                                         cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+        if self.save_images: cv2.imwrite(
+            self.save_images_path + "full_size_{}{:0>7.3f}.png".format(extra_img_name, self.data.time),
+            cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
         img = cv2.resize(img, self.img_reduced_size)
         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        if self.save_images: cv2.imwrite(self.save_images_path + "reduced_size_{}{:0>7.3f}.png".format(extra_img_name, self.data.time),
-                                         cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-        if self.save_images: cv2.imwrite(self.save_images_path + "reduced_gray_{}{:0>7.3f}.png".format(extra_img_name, self.data.time), gray)
+        if self.save_images: cv2.imwrite(
+            self.save_images_path + "reduced_size_{}{:0>7.3f}.png".format(extra_img_name, self.data.time),
+            cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+        if self.save_images: cv2.imwrite(
+            self.save_images_path + "reduced_gray_{}{:0>7.3f}.png".format(extra_img_name, self.data.time), gray)
         return gray / 255.0
 
     def format_obs(self, lin_obs, img_obs):
@@ -391,14 +397,14 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
                 gps_exact[1] > 25):  # penalty for leaving the camp
             terminated = True
             if self.verbose >= 1:
-                print(colorize("Left Camp", 'magenta', bold=True))
+                safe_print(colorize("Left Camp", 'magenta', bold=True))
             r -= self.leave_penalty
             info['death'] = 1  # self kill
         elif self.data.time >= 99.9:
             terminated = True
             info['timeout'] = self.current_goal
             if self.verbose >= 1:
-                print(colorize("Out of Time", 'magenta', bold=True))
+                safe_print(colorize("Out of Time", 'magenta', bold=True))
 
         else:
             terminated = False
@@ -417,7 +423,8 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
             if not circle_penalty == 0:
                 info['death'] = 1  # self kill
                 if self.verbose >= 1:
-                    print(colorize("Death Circle Activated", 'magenta', bold=True))
+                    safe_print(colorize("Death Circle Activated", 'magenta', bold=True))
+
         self.last_straight_time, terminated, flip_penalty = self.is_flipped(terminated, self.data.time,
                                                                             self.last_straight_time,
                                                                             self.flipped_time)
@@ -426,10 +433,22 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
             if not flip_penalty == 0:
                 info['death'] = 1  # self kill
                 if self.verbose >= 1:
-                    print(colorize("Flipped", 'magenta', bold=True))
+                    safe_print(colorize("Flipped", 'magenta', bold=True))
 
         obs = self.format_obs(ob, img)
         truncated = False
+
+        self.reward_sum += r
+        self.reward_discounted_sum += self.gamma * r
+        if terminated and self.verbose >= 2:
+            safe_print(colorize("Reward sum:{}".format(self.reward_sum), 'white', bold=True))
+            safe_print(colorize("Reward discounted sum:{}".format(self.reward_discounted_sum), 'white', bold=True))
+        if self.verbose >= 3 and self.step_counter % 10 == 0:  # DEBUG INFO
+            safe_print(colorize("fwd rew:{}".format(forward_reward), 'white', bold=True))
+            safe_print(colorize("ctrl cost:{}".format(ctrl_cost), 'white', bold=True))
+            safe_print(colorize("time cost:{}".format(time_cost), 'white', bold=True))
+            safe_print(colorize("survive rew:{}".format(survive_reward), 'white', bold=True))
+
         return obs, r, terminated, truncated, info
 
     def is_flipped(self, done, current_time, last_straight_time, death_time):
@@ -520,6 +539,9 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
 
     def reset_model(self):
         self.step_counter = 0
+        self.reward_sum = 0
+        self.reward_discounted_sum = 0
+
         '''
         Reinicializa a simulação
         '''
@@ -582,7 +604,7 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
                         continue
 
                 if self.verbose >= 1:
-                    print(colorize("starting at random position {}".format(rover_random_xy_pos), 'blue', bold=False))
+                    safe_print("starting at random position {}".format(rover_random_xy_pos))
                 quat = create_quat(np.random.rand() * 2 * np.pi, 0, 0, 1, is_radian=True)
                 self.set_state(np.array([*rover_random_xy_pos, 0.2, *quat, *self.init_qpos[7:]]), self.init_qvel)
             else:
@@ -595,12 +617,12 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
                                    self.init_qvel)
 
                 if self.verbose >= 1:
-                    print(colorize("starting at {}".format(
+                    safe_print(colorize("starting at {}".format(
                         'init_pos' if self.current_goal == 0 else 'goal {}'.format(self.current_goal - 1)), 'cyan',
                         bold=False))
 
         if self.verbose >= 1:
-            print(colorize('current_goal: {}'.format(self.current_goal), 'yellow', bold=False))
+            safe_print(colorize('current_goal: {}'.format(self.current_goal), 'yellow', bold=False))
 
         gps_exact, ob, img = self._get_obs()
         self.x_before = self.data.qpos[0:2].copy() + self.sensors_error * np.random.rand(2)
@@ -827,7 +849,7 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
     def update_goal(self):
 
         if self.verbose >= 1:
-            print(colorize("Goal {} reached!".format(self.current_goal), 'red', bold=True))
+            safe_print(colorize("Goal {} reached!".format(self.current_goal), 'red', bold=True))
         if self.current_goal != 2:
             self.current_goal += 1
         else:
@@ -899,6 +921,30 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
         self.end_after_current_goal = True
         return 0
 
+    def get_goal_reached_reward(self):
+        return self.goal_rwd
+
+    def _model_update(self, model_string):
+        '''
+        equivalent to _initialize_simulation() from MujocoEnv class at mujoco_env.py, except for loading the model from
+        a customized string.
+        Base on the following example (from https://colab.research.google.com/github/deepmind/mujoco/blob/main/python/tutorial.ipynb#scrollTo=3KJVqak6xdJa&line=1&uniqifier=1):
+        xml = """
+        <mujoco>
+          <worldbody>
+            <geom name="red_box" type="box" size=".2 .2 .2" rgba="1 0 0 1"/>
+            <geom name="green_sphere" pos=".2 .2 .2" size=".1" rgba="0 1 0 1"/>
+          </worldbody>
+        </mujoco>
+        """
+        model = mujoco.MjModel.from_xml_string(xml)
+        '''
+        self.model = mujoco.MjModel.from_xml_string(model_string)
+        # MjrContext will copy model.vis.global_.off* to con.off*
+        self.model.vis.global_.offwidth = self.width
+        self.model.vis.global_.offheight = self.height
+        self.data = mujoco.MjData(self.model)
+
 
 def create_quat(angle, x, y, z, is_radian=True):
     dir = np.array([x, y, z])
@@ -941,3 +987,5 @@ def colorize(string, color, bold=False, highlight=False):
     attr.append(str(num))
     if bold: attr.append('1')
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
+
+
