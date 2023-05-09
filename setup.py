@@ -19,6 +19,7 @@ setup(
         'mujoco==2.3.3',
         'opencv-python==4.7.0.72',
         'keras==2.12.0',
-        'tensorflow==2.12.0'
+        'tensorflow==2.12.0',
+        'tqdm==4.65.0'
     ],
 )
