@@ -15,6 +15,7 @@ from stable_baselines3.common.utils import explained_variance, safe_mean
 from stable_baselines3.ppo.ppo import PPO
 from torch.nn import functional as F
 
+from Rover.utils.lr_schedulers import linear_schedule
 from Rover.utils.networks_ranking import RoverRankingSystem
 
 SelfPPO = TypeVar("SelfPPO", bound="PPO")
@@ -79,7 +80,7 @@ class PPO_Rover(PPO):
             self,
             policy: Union[str, Type[ActorCriticPolicy]],
             env: Union[GymEnv, str],
-            learning_rate: Union[float, Schedule] = 3e-4,
+            learning_rate: Union[float, Schedule] = linear_schedule(0.00005),
             n_steps: int = 2048,
             batch_size: int = 64,
             n_epochs: int = 10,
@@ -104,30 +105,30 @@ class PPO_Rover(PPO):
             _init_setup_model: bool = True,
     ):
         super().__init__(
-            policy,
-            env,
-            learning_rate,
-            n_steps,
-            batch_size,
-            n_epochs,
-            gamma,
-            gae_lambda,
-            clip_range,
-            clip_range_vf,
-            normalize_advantage,
-            ent_coef,
-            vf_coef,
-            max_grad_norm,
-            use_sde,
-            sde_sample_freq,
-            target_kl,
-            stats_window_size,
-            tensorboard_log,
-            policy_kwargs,
-            verbose,
-            seed,
-            device,
-            _init_setup_model,
+            policy=policy,
+            env=env,
+            learning_rate=learning_rate,
+            n_steps=n_steps,
+            batch_size=batch_size,
+            n_epochs=n_epochs,
+            gamma=gamma,
+            gae_lambda=gae_lambda,
+            clip_range=clip_range,
+            clip_range_vf=clip_range_vf,
+            normalize_advantage=normalize_advantage,
+            ent_coef=ent_coef,
+            vf_coef=vf_coef,
+            max_grad_norm=max_grad_norm,
+            use_sde=use_sde,
+            sde_sample_freq=sde_sample_freq,
+            target_kl=target_kl,
+            stats_window_size=stats_window_size,
+            tensorboard_log=tensorboard_log,
+            policy_kwargs=policy_kwargs,
+            verbose=verbose,
+            seed=seed,
+            device=device,
+            _init_setup_model=_init_setup_model,
         )
         self.clear_ep_info_buffer_every_iteration = clear_ep_info_buffer_every_iteration
         self.rover_rankings = None
@@ -362,7 +363,8 @@ class PPO_Rover(PPO):
         # guarantee that we will not have a NaN if the rover does not complete any episodes (being by death or success)
         # BUT may get an (improbable) error if it happens on first episode (will get undefined variables)
         if not num_episodes == 0:
-            MEA = np.dot([100.0, 50.0, 70.0], goal_episodes) / num_episodes
+            # MEA = np.dot([100.0, 50.0, 70.0], goal_episodes) / num_episodes  # TODO: use eng goal rew to compensate effects
+            MEA = np.dot([110.0, 60.0, 80.0], goal_episodes) / num_episodes # Test with goal_rwd = 10.0
             death_rate = 100.0 * deaths / num_episodes
             avg_per_MEA = 100.0 * avgEpRet / MEA
             success_rate = 100.0 * np.sum(goal_reached_episodes) / num_episodes
