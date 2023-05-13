@@ -11,3 +11,4 @@ def register_rover_environments():
     register(id="Rover4WeDoubleCameraFused-v0", entry_point='Rover.Environments.rover_4We_DoubleCam'
                                                              ':Rover4WeDoubleCameraFusedv0Env')
     register(id="Rover4W-v1", entry_point='Rover.Environments.rover_4W:Rover4Wv1Env')
+    register(id="Rover4WMetaLearning-v0", entry_point='Rover.Environments.rover_4W_MetaLearning:RoverMetaLearningEnv')
