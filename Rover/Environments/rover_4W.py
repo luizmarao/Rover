@@ -70,7 +70,8 @@ class Rover4Wv1Env(RoverRobotrek4Wev2Env):
             avoid_radius: float = 0.5,
             end_after_current_goal: bool = True,
             verbose: int = 0,
-            **kwargs
+            gamma: float = 0.99,
+            ** kwargs
     ):
         self.use_ramps = False
         self.use_posts = False
@@ -96,6 +97,7 @@ class Rover4Wv1Env(RoverRobotrek4Wev2Env):
         self.random_start = random_start
         self.random_current_goal = random_current_goal
         self.avoid_radius = avoid_radius
+        self.gamma = gamma
         self.end_after_current_goal = end_after_current_goal
         self.save_images = None
         self.verbose = verbose
