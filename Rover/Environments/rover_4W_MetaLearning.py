@@ -71,7 +71,7 @@ class RoverMetaLearningEnv(gym.Env):
 
         ## ROVER ENVIRONMENTS PPO PARAMETERS ##
         self.total_learning_timesteps = int(2e4)
-        self.n_steps = 2048  # for each env per update
+        self.n_steps = 512  # for each env per update
         self.seed = None
         self.policy_kwargs = dict(
             net_arch=self.net_arch,
@@ -141,9 +141,18 @@ class RoverMetaLearningEnv(gym.Env):
         model.set_logger(self.logger)
         model.learn(total_timesteps=self.total_learning_timesteps, progress_bar=False)
 
-        success_rates = [net.performance_list[2] for net in rover_rankings.rankings[2]]
-        avg_mea_rates = [net.performance_list[1] for net in rover_rankings.rankings[1]]
-        non_dying_rates = [net.performance_list[0] for net in rover_rankings.rankings[0]]
+        success_rates = []
+        avg_mea_rates = []
+        non_dying_rates = []
+        for rank_idx in range(len(rover_rankings.rankings)):
+            for net in rover_rankings.rankings[rank_idx]:
+                if rank_idx == 2 and not np.isnan(net.performance_list[rank_idx]):
+                    success_rates.append(net.performance_list[rank_idx])
+                if rank_idx == 1 and not np.isnan(net.performance_list[rank_idx]):
+                    avg_mea_rates.append(net.performance_list[rank_idx])
+                if rank_idx == 0 and not np.isnan(net.performance_list[rank_idx]):
+                    non_dying_rates.append(net.performance_list[rank_idx])
+
         global_avg_mea_mean = np.mean(avg_mea_rates)
         global_non_dying_mean = np.mean(non_dying_rates)
         global_success_mean = np.mean(success_rates)
