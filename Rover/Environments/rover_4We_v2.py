@@ -220,7 +220,7 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
             random_start: bool = False,
             random_current_goal: bool = True,
             avoid_radius: float = 0.5,
-            gamma: float = 1,
+            gamma: float = 0.99,
             end_after_current_goal: bool = True,
             save_images: bool = False,
             verbose: int = 0,
