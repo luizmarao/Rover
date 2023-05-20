@@ -70,8 +70,8 @@ class RoverMetaLearningEnv(gym.Env):
         self.net_arch = dict(pi=[64, 64], vf=[64, 64])  # mlp extractor after conv layers (feature extractor)
 
         ## ROVER ENVIRONMENTS PPO PARAMETERS ##
-        self.total_learning_timesteps = int(2e4)
-        self.n_steps = 512  # for each env per update
+        self.total_learning_timesteps = int(2e5)
+        self.n_steps = 2048  # for each env per update
         self.seed = None
         self.policy_kwargs = dict(
             net_arch=self.net_arch,

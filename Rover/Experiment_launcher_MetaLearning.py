@@ -29,8 +29,8 @@ if __name__ == "__main__":
     net_arch = dict(pi=[64, 64], vf=[64, 64])
 
     ## PPO PARAMETERS ##
-    total_learning_timesteps = int(5e6)
-    n_steps = 4  # for each env per update
+    n_steps = 6  # for each env per update
+    total_learning_timesteps = int(30 * num_environments * n_steps)
     seed = None
     learning_rate = 0.001
     gamma = 0.99
@@ -73,4 +73,4 @@ if __name__ == "__main__":
     model.set_logger(logger)
     model.learn(total_timesteps=total_learning_timesteps, progress_bar=True)
 
-    model.save(path=os.path.join(logger.get_dir(), "saved_model"), include=None, exclude=None)
+    model.save(path=os.path.join(logger.get_dir(), "saved_model_meta_learning"), include=None, exclude=None)
