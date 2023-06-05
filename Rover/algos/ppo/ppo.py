@@ -17,6 +17,7 @@ from torch.nn import functional as F
 
 from Rover.utils.lr_schedulers import linear_schedule
 from Rover.utils.networks_ranking import RoverRankingSystem
+from Rover.utils.callback import RoverCallback
 
 SelfPPO = TypeVar("SelfPPO", bound="PPO")
 
@@ -257,7 +258,7 @@ class PPO_Rover(PPO):
     def learn(
             self: SelfPPO,
             total_timesteps: int,
-            callback: MaybeCallback = None,
+            callback: RoverCallback = RoverCallback(),
             log_interval: int = 1,
             tb_log_name: str = "OnPolicyAlgorithm",
             reset_num_timesteps: bool = True,
@@ -345,25 +346,39 @@ class PPO_Rover(PPO):
         minEpRet = np.nan if len(r) == 0 else np.min(r)
         maxEpRet = np.nan if len(r) == 0 else np.max(r)
         deaths = 0
-        for epinfo in epinfobuf:
-            if epinfo.get("death") is not None:
-                deaths += 1
         goal_episodes = [0, 0, 0]
         goal_reached_episodes = [0, 0, 0]
+        '''
+        For each training episode, checks for the sorted goal and verify if the episode was concluded before the 
+        roullout's ending. If not, removes that from the success rate evaluation
+        '''
         for epinfo in epinfobuf:
+            interrupted = True
+            timeout = epinfo.get("timeout")
             goal_episode = epinfo.get('current_goal')
             goal_reached = epinfo.get('goal_reached_flag')
-            if goal_episode is not None:
-                goal_episodes[int(goal_episode)] += 1
-            if goal_reached is not None:
+            death = epinfo.get("death")
+            if timeout is not None:
+                interrupted = False
+            elif death is not None:
+                deaths += 1
+                interrupted = False
+            elif goal_reached is not None:
                 goal_reached_episodes[int(goal_reached)] += 1
+                interrupted = False
+            if goal_episode is not None:
+                if not interrupted:
+                    goal_episodes[int(goal_episode)] += 1
+                else:
+                    if self.verbose >= 2:
+                        print("An episode has not been concluded before the roullout's ending")
 
         num_episodes = 1.0 * np.sum(goal_episodes)
         # print("g eh:",g)
         # guarantee that we will not have a NaN if the rover does not complete any episodes (being by death or success)
         # BUT may get an (improbable) error if it happens on first episode (will get undefined variables)
         if not num_episodes == 0:
-            # MEA = np.dot([100.0, 50.0, 70.0], goal_episodes) / num_episodes  # TODO: use eng goal rew to compensate effects
+            # MEA = np.dot([100.0, 50.0, 70.0], goal_episodes) / num_episodes  # TODO: use env goal rew to compensate effects
             MEA = np.dot([110.0, 60.0, 80.0], goal_episodes) / num_episodes # Test with goal_rwd = 10.0
             death_rate = 100.0 * deaths / num_episodes
             avg_per_MEA = 100.0 * avgEpRet / MEA
