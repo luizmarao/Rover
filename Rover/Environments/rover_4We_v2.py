@@ -639,6 +639,8 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
             seed: Optional[int] = None,
             options: Optional[dict] = None,
     ):
+        if self.verbose >= 4:  # verbose DEBUG LEVEL
+            safe_print(colorize("Env was reseted!", 'red', bold=True))
         gymnasium.core.Env.reset(self, seed=seed)
 
         self._reset_simulation()
