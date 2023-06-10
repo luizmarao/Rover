@@ -104,6 +104,7 @@ class PPO_Rover(PPO):
             seed: Optional[int] = None,
             device: Union[th.device, str] = "auto",
             _init_setup_model: bool = True,
+            **kwargs
     ):
         super().__init__(
             policy=policy,
@@ -378,8 +379,7 @@ class PPO_Rover(PPO):
         # guarantee that we will not have a NaN if the rover does not complete any episodes (being by death or success)
         # BUT may get an (improbable) error if it happens on first episode (will get undefined variables)
         if not num_episodes == 0:
-            # MEA = np.dot([100.0, 50.0, 70.0], goal_episodes) / num_episodes  # TODO: use env goal rew to compensate effects
-            MEA = np.dot([110.0, 60.0, 80.0], goal_episodes) / num_episodes # Test with goal_rwd = 10.0
+            MEA = np.dot([100.0, 50.0, 70.0], goal_episodes) / num_episodes
             death_rate = 100.0 * deaths / num_episodes
             avg_per_MEA = 100.0 * avgEpRet / MEA
             success_rate = 100.0 * np.sum(goal_reached_episodes) / num_episodes
