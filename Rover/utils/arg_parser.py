@@ -10,22 +10,65 @@ def common_arg_parser():
     Create an argparse.ArgumentParser for run_mujoco.py.
     """
     parser = arg_parser()
-    parser.add_argument('--env', help='environment ID', type=str, default='Reacher-v2')
-    parser.add_argument('--env_type', help='type of environment, used when the environment type cannot be automatically determined', type=str)
+    parser.add_argument('--env', help='environment ID', type=str, default='Rover4We-v2')
     parser.add_argument('--seed', help='RNG seed', type=int, default=None)
-    parser.add_argument('--alg', help='Algorithm', type=str, default='ppo2')
+    parser.add_argument('--alg', help='Algorithm', type=str, default='ppo2')  # Future change might include recurrent PPO
     parser.add_argument('--exp_name', help='The experiment name to go on the saving folder', type=str, default=None)
-    parser.add_argument('--num_timesteps', type=float, default=1e6),
-    parser.add_argument('--network', help='network type (mlp, cnn, lstm, cnn_lstm, conv_only)', default=None)
-    parser.add_argument('--gamestate', help='game state to load (so far only used in retro games)', default=None)
-    parser.add_argument('--num_env', help='Number of environment copies being run in parallel. When not specified, set to number of cpus for Atari, and to 1 for Mujoco', default=None, type=int)
-    parser.add_argument('--reward_scale', help='Reward scale factor. Default: 1.0', default=1.0, type=float)
-    parser.add_argument('--save_path', help='Path to save trained model to', default=None, type=str)
-    parser.add_argument('--save_video_interval', help='Save video every x steps (0 = disabled)', default=0, type=int)
-    parser.add_argument('--save_video_length', help='Length of recorded video. Default: 200', default=200, type=int)
-    parser.add_argument('--log_path', help='Directory to save learning curve data.', default=None, type=str)
+    parser.add_argument('--exp_root_folder', help='Directory in which the exp folder will be created to save logs and trained models', default=None, type=str)
+    parser.add_argument('--num_timesteps', help='total learning steps', type=int, default=1e7),
+    parser.add_argument('--n_steps', help='Steps for each env per iteration', type=int, default=4096),
+    parser.add_argument('--n_epochs', help='Amount of training epochs for each iteration', type=int, default=50),
+    parser.add_argument('--batch_size',  type=int, default=8192),
+    parser.add_argument('--net_arch', help='network\'s mlp layers', default=dict(pi=[64, 64], vf=[64, 64]))
+    parser.add_argument('--conv_layers', help='network\'s mlp layers', default=[(16, 8, 2), (32, 4, 2), (64, 2, 1)])
+    parser.add_argument('--num_env', help='Number of environment copies being run in parallel.', default=4, type=int)
+    parser.add_argument('--lr', help='Networks\' learning rate', default=0.00005, type=float)
+    parser.add_argument('--lr_schedule', help='Use a linear schedule on the learning rate', default=True, action='store_true')
+    parser.add_argument('--use_sde', default=False, action='store_true')
+    parser.add_argument('--gamma', type=float, default=0.99),
+    parser.add_argument('--gae_lambda', type=float, default=0.95),
+    parser.add_argument('--clip_range', type=float, default=0.08),
+    parser.add_argument('--ent_coef', type=float, default=0.1),
+    parser.add_argument('--max_grad_norm', type=float, default=0.5),
+    parser.add_argument('--target_kl', type=float, default=0.08),
+    parser.add_argument('--networks_limit_per_ranking', type=int, default=5),
+    parser.add_argument('--num_rankings', type=int, default=3),
+    parser.add_argument('--dynamic_obs_size', type=int, default=14),
+    parser.add_argument('--img_red_size', default=(64, 64)),
+    parser.add_argument('--networks_architecture', type=str, default=None)
+    parser.add_argument('--features_extractor_class', type=str, default=None)
+    parser.add_argument('--features_extractor_lin_layers', type=str, default=None)
+    parser.add_argument('--encoder_name', type=str, default=None)
+    parser.add_argument('--share_features_extractor', default=True, action='store_true')
+    parser.add_argument('--start_at_initpos', default=False, action='store_true')
+    parser.add_argument('--end_after_current_goal', default=True, action='store_true')
+    parser.add_argument('--random_current_goal', default=True, action='store_true')
+    parser.add_argument('--save_images', default=False, action='store_true')
+    parser.add_argument('--normalize_images', default=False, action='store_true')
+    parser.add_argument('--env_verbose', type=int, default=0),
+
+
     parser.add_argument('--play', default=False, action='store_true')
-    parser.add_argument('--vecnormalize', default=False, action='store_true')
-    parser.add_argument('--dt', help='Put a timestamp in the experiment folder', default=False, action='store_true')
     parser.add_argument('--just_eval', help='skip training phase and run just the eval steps with all networks in experiment checkpoint\'s folder', default=False, action='store_true')
     return parser
+
+def parse_unknown_args(args):
+    """
+    Parse arguments not consumed by arg parser into a dictionary
+    """
+    retval = {}
+    preceded_by_key = False
+    for arg in args:
+        if arg.startswith('--'):
+            if '=' in arg:
+                key = arg.split('=')[0][2:]
+                value = arg.split('=')[1]
+                retval[key] = value
+            else:
+                key = arg[2:]
+                preceded_by_key = True
+        elif preceded_by_key:
+            retval[key] = arg
+            preceded_by_key = False
+
+    return retval
