@@ -1,14 +1,23 @@
-from stable_baselines3.common.callbacks import BaseCallback
-
+from stable_baselines3.common.callbacks import BaseCallback, StopTrainingOnNoModelImprovement
+import numpy as np
 
 class RoverCallback(BaseCallback):
     """
     A custom callback that derives from ``BaseCallback``.
 
+    - Reset the environments when starting a rollout, to ensure proper measurement of success and failure rates.
+    - Stop the training early if there is no new best model (new best mean reward) after more than N consecutive evaluations.
+    - It is possible to define a minimum number of evaluations before start to count evaluations without improvement.
+
     :param verbose: Verbosity level: 0 for no output, 1 for info messages, 2 for debug messages
+    :param max_no_improvement_evals: Maximum number of consecutive evaluations without a new best model.
+    :param min_evals: Number of evaluations before start to count evaluations without improvements.
+    :param verbose: Verbosity level: 0 for no output, 1 for indicating when training ended because no new best model
     """
-    def __init__(self, verbose=0):
+    def __init__(self, max_no_improvement_evals: int = 1000, min_evals: int = 0, verbose: int = 0):
         super(RoverCallback, self).__init__(verbose)
+        #TODO: implement stop when the model is not improving -> see StopTrainingOnNoModelImprovement(BaseCallback):
+
         # Those variables will be accessible in the callback
         # (they are defined in the base class)
         # The RL model
@@ -26,6 +35,11 @@ class RoverCallback(BaseCallback):
         # # Sometimes, for event callback, it is useful
         # # to have access to the parent object
         # self.parent = None  # type: Optional[BaseCallback]
+        self.max_no_improvement_evals = max_no_improvement_evals
+        self.min_evals = min_evals
+        self.last_best_mean_reward = -np.inf
+        self.no_improvement_evals = 0
+        self.continue_training = True
 
     def _on_training_start(self) -> None:
         """
@@ -39,7 +53,10 @@ class RoverCallback(BaseCallback):
         using the current policy.
         This event is triggered before collecting new samples.
         """
-        pass
+        self.training_env.reset()
+        if self.verbose >=2 :
+            print("The environment has been reseted")
+
 
     def _on_step(self) -> bool:
         """
