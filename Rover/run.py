@@ -26,6 +26,27 @@ def parse_cmdline_kwargs(args):
             return v
 
     return {k: parse(v) for k, v in parse_unknown_args(args).items()}
+
+def exp_call_file_write(exp_path, args, arg_parser, extra_args):
+    call_args = open(os.path.join(exp_path, 'exp_call_args.txt'), mode='w')
+    call_args.write("This experiment was called by the following command line:\n")
+    cmd_line = 'python -m Rover.run '
+    for _ in args[1:]:
+        cmd_line += _ + ' '
+
+    call_args.write(cmd_line+'\n\n')
+    call_args.write('Including the arguments not present in the call\'s command line, the experiment received the '
+                    'following data as parameters (some may not be used by the chosen environment):\n\n')
+    for k, v in arg_parser.__dict__.items():
+        call_args.write(k + ': ' + str(v)+'\n')
+
+    for k, v in extra_args.items():
+        call_args.write(k + ': ' + str(v)+'\n')
+
+    call_args.flush()
+    call_args.close()
+
+
 def main(args):
     args_ = args
     arg_parser = common_arg_parser()
@@ -125,6 +146,7 @@ def main(args):
                                         networks_subfolder='saved_networks', verbose=0)
     model.set_ranking_system(rover_rankings)
     model.set_logger(logger)
+    exp_call_file_write(logger.get_dir(), args_, args, extra_args)
     model.learn(total_timesteps=total_learning_timesteps, progress_bar=True)
 
     # model.save(path=os.path.join(logger.get_dir(), "saved_model"), include=None, exclude=None)
