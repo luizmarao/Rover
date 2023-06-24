@@ -219,11 +219,20 @@ class App(tk.Tk):
         self.tab_control.grid(column=0, row=0, sticky=tk.NSEW)
 
         tab1 = PlotArea(self.tab_control, self, progress_files=[])
-        # tab2 = PlotArea(self.tab_control, self, progress_files=[])
+        self.tab_plus = tk.Frame(self.tab_control)
+        # tab_plus = PlotArea(self.tab_control, self, progress_files=[])
         self.tab_control.add(tab1, text="Plot 1")
-        # self.tab_control.add(tab2, text="Plot 2")
-
+        self.tab_control.add(self.tab_plus, text="+")
+        self.tab_control.bind('<<NotebookTabChanged>>', self.new_tab)
         return right_frame
+
+    def new_tab(self, *args):
+        tab_name = self.tab_control.select()
+        if tab_name.split('.')[-1] == '!frame':
+            num_tabs = len(self.tab_control.children)
+            tab = PlotArea(self.tab_control, self, progress_files=[])
+            self.tab_control.insert(self.tab_plus, tab, text='Plot' + str(num_tabs))
+            self.tab_control.select(num_tabs - 1)
 
     def create_main_window(self):
         # Create the menu bar
