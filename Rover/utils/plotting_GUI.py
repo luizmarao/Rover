@@ -57,15 +57,24 @@ class PlotArea(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         self.line_plot_list = []
-        self.figure = Figure(figsize=(5, 5))
+        self.figure = Figure(figsize=(10, 5))
         self.ax = self.figure.add_subplot(111)
         # aux_plot, = self.ax.plot([1, 2, 3, 4, 5, 6, 7, 8], [5, 6, 1, 3, 8, 9, 3, 5])
         # self.line_plot_list.append(aux_plot)
 
+        separator = ttk.Separator(self, orient='horizontal')
+        separator.pack(anchor=tk.NW, fill=tk.X)
         title_label = tk.Label(self, text='Plot Title: ')
         self.title_field = tk.Entry(self)
         title_label.pack(anchor=tk.NW, pady=5)
         self.title_field.pack(anchor=tk.NW, fill=tk.X, pady=5, padx=2)
+        separator = ttk.Separator(self, orient='horizontal')
+        separator.pack(anchor=tk.NW, fill=tk.X)
+        fields_label = tk.Label(self, text='Select Fields and smooth: ')
+        fields_label.pack(anchor=tk.NW, pady=5)
+        self.plot_config_area = tk.Frame(self)
+
+        self.plot_config_area.pack(anchor=tk.NW, fill=tk.BOTH)
 
         self.canvas = FigureCanvasTkAgg(self.figure, self)
         # canvas.show()
@@ -73,15 +82,44 @@ class PlotArea(tk.Frame):
 
         self.toolbar = NavigationToolbar2Tk(self.canvas, self)
         self.toolbar.update()
-        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH)
+
+
+    def update_plot_config_area(self):
+        fields_per_row = 8
+        if not len(self.progress_files) == 0:
+            field_boxes = {}
+            with open(self.progress_files[0], 'r') as progress_file:
+                csv_reader = csv.DictReader(progress_file, delimiter=',')
+
+                fields = list(next(csv_reader).keys())
+                default_fields = ["rollout/success_rate (%)", "rollout/ep_rew_mean", "rollout/ep_rew_min",
+                                  "rollout/ep_rew_max", "rollout/Avg÷MEA (%)"]
+                fields.sort()
+                for idx, field in enumerate(fields):
+                    # start = field[0:3]
+                    box_var = tk.IntVar()
+                    box = tk.Checkbutton(self.plot_config_area, text=field, onvalue=1, offvalue=0, variable=box_var)
+                    box.var = box_var
+                    if field in default_fields:
+                        box.select()
+
+                    box.configure(command=self.update_plot_config_area)
+                    box.grid(column=idx % fields_per_row, row=int(idx / fields_per_row), sticky=tk.W)
+                    field_boxes[field] = box
+
+
+            self.plot_config_area.field_boxes = field_boxes
 
     def set_progress_files(self, progress_files):
         self.progress_files = progress_files
         self.file_watchers = [FileWatcher(progress_file_path) for progress_file_path in progress_files]
+        self.update_plot_config_area()
 
     def add_progress_file(self, progress_file):
         self.progress_files += [progress_file]
         self.file_watchers += [FileWatcher(progress_file)]
+        self.update_plot_config_area()
 
     def plot_update(self):
         legends = []
@@ -93,7 +131,12 @@ class PlotArea(tk.Frame):
 
                 xlabel = 'time/total_timesteps'
                 smooth_window = 20
-                selected_fields = ["rollout/success_rate (%)", "rollout/ep_rew_mean", "rollout/ep_rew_min", "rollout/ep_rew_max", "rollout/Avg÷MEA (%)"]
+                selected_fields = []
+                #selected_fields = ["rollout/success_rate (%)", "rollout/ep_rew_mean", "rollout/ep_rew_min",
+                                  #"rollout/ep_rew_max", "rollout/Avg÷MEA (%)"]
+                for field, box in self.plot_config_area.field_boxes.items():
+                    if box.var.get():
+                        selected_fields.append(field)
                 is_selecting_fields = False
                 solid_line_re = re.compile('-')
                 dashed_line_re = re.compile('--')
@@ -224,10 +267,12 @@ class App(tk.Tk):
         return left_frame
 
     def create_plot_side(self):
-        right_frame = ttk.Frame(self, height=800, width=800)
+        width = 1600
+        heigth = 800
+        right_frame = ttk.Frame(self, height=heigth, width=width)
         right_frame.grid(column=2, row=0, sticky=tk.NSEW)
 
-        self.tab_control = ttk.Notebook(right_frame, height=800, width=800)
+        self.tab_control = ttk.Notebook(right_frame, height=heigth, width=width)
         self.tab_control.grid(column=0, row=0, sticky=tk.NSEW)
 
         tab1 = PlotArea(self.tab_control, self, progress_files=[])
