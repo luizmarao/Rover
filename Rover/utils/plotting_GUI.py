@@ -62,6 +62,11 @@ class PlotArea(tk.Frame):
         # aux_plot, = self.ax.plot([1, 2, 3, 4, 5, 6, 7, 8], [5, 6, 1, 3, 8, 9, 3, 5])
         # self.line_plot_list.append(aux_plot)
 
+        title_label = tk.Label(self, text='Plot Title: ')
+        self.title_field = tk.Entry(self)
+        title_label.pack(anchor=tk.NW, pady=5)
+        self.title_field.pack(anchor=tk.NW, fill=tk.X, pady=5, padx=2)
+
         self.canvas = FigureCanvasTkAgg(self.figure, self)
         # canvas.show()
         self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
@@ -79,6 +84,7 @@ class PlotArea(tk.Frame):
         self.file_watchers += [FileWatcher(progress_file)]
 
     def plot_update(self):
+        legends = []
         for progress_file_path in self.progress_files:
             with open(progress_file_path, 'r') as progress_file:
                 csv_reader = csv.DictReader(progress_file, delimiter=',')
@@ -94,7 +100,7 @@ class PlotArea(tk.Frame):
                 dotted_line_re = re.compile(r'\*')
                 dash_dotted_line_re = re.compile(r'\*-')
                 line_types = {selected_fields[-1]: '-'}
-                title = ''
+                title = self.title_field.get()
                 xlabel_custom = ''
                 ylabel = ''
                 xmax = 0
@@ -141,7 +147,12 @@ class PlotArea(tk.Frame):
                     if not ylabel == '':
                         self.ax.set_ylabel(ylabel)
                     self.ax.set_title(title)
-                    self.figure.legend(selected_fields).set_draggable(True)
+                    if len(self.progress_files) > 1:
+                        extra_legend = progress_file_path.split('/')[-2].split('-')[0] + '/'
+                        legends += [extra_legend + legend for legend in selected_fields.copy()]
+                    else:
+                        legends += selected_fields.copy()
+                    # self.figure.legend(legends).set_draggable(True)
                     # plt.ion()
                     # self.figure.show()
                 else:
@@ -152,6 +163,7 @@ class PlotArea(tk.Frame):
                     # time.sleep(1.)
                     #self.figure.canvas.flush_events()
                 first_time = False
+        self.figure.legend(legends).set_draggable(True)
         self.canvas.draw()
 
 class App(tk.Tk):
@@ -299,6 +311,7 @@ class App(tk.Tk):
                                            'progress.csv') for idx in self.tree.selection()]
                 plot_area.set_progress_files(progress_files)
                 plot_area.ax.clear()
+                plot_area.figure.legends.clear()
                 plot_area.plot_update()
 
     def add2plot(self):
@@ -316,6 +329,7 @@ class App(tk.Tk):
 
 
                 plot_area.ax.clear()
+                plot_area.figure.legends.clear()
                 plot_area.plot_update()
 
 
