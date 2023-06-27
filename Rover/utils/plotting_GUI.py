@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 
 import tkinter as tk
 from tkinter import ttk
-from tkinter import filedialog
+from tkinter import filedialog, simpledialog, messagebox
 import os
 from os import path as osp
 import csv
@@ -44,7 +44,6 @@ class FileWatcher:
         else:
             return False
 
-# from here: https://stackoverflow.com/a/14314054/6609908
 def moving_average(a, n=3) :
     ret = np.cumsum(a, dtype=float)
     ret[n:] = ret[n:] - ret[:-n]
@@ -59,8 +58,6 @@ class PlotArea(tk.Frame):
         self.line_plot_list = []
         self.figure = Figure(figsize=(10, 5))
         self.ax = self.figure.add_subplot(111)
-        # aux_plot, = self.ax.plot([1, 2, 3, 4, 5, 6, 7, 8], [5, 6, 1, 3, 8, 9, 3, 5])
-        # self.line_plot_list.append(aux_plot)
 
         separator = ttk.Separator(self, orient='horizontal')
         separator.pack(anchor=tk.NW, fill=tk.X)
@@ -73,11 +70,12 @@ class PlotArea(tk.Frame):
         fields_label = tk.Label(self, text='Select Fields and smooth: ')
         fields_label.pack(anchor=tk.NW, pady=5)
         self.plot_config_area = tk.Frame(self)
+        self.plot_config_area.field_boxes = {}
+        self.plot_config_area.smooth_size = None
 
         self.plot_config_area.pack(anchor=tk.NW, fill=tk.BOTH)
 
         self.canvas = FigureCanvasTkAgg(self.figure, self)
-        # canvas.show()
         self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
         self.toolbar = NavigationToolbar2Tk(self.canvas, self)
@@ -86,6 +84,9 @@ class PlotArea(tk.Frame):
 
 
     def update_plot_config_area(self):
+        for field, box in self.plot_config_area.field_boxes.items():
+            box.destroy()
+        self.plot_config_area.field_boxes.clear()
         fields_per_row = 8
         if not len(self.progress_files) == 0:
             field_boxes = {}
@@ -97,32 +98,39 @@ class PlotArea(tk.Frame):
                                   "rollout/ep_rew_max", "rollout/Avg÷MEA (%)"]
                 fields.sort()
                 for idx, field in enumerate(fields):
-                    # start = field[0:3]
                     box_var = tk.IntVar()
                     box = tk.Checkbutton(self.plot_config_area, text=field, onvalue=1, offvalue=0, variable=box_var)
                     box.var = box_var
                     if field in default_fields:
                         box.select()
 
-                    box.configure(command=self.update_plot_config_area)
+                    box.configure(command=self.plot_update)
                     box.grid(column=idx % fields_per_row, row=int(idx / fields_per_row), sticky=tk.W)
                     field_boxes[field] = box
 
+            if self.plot_config_area.smooth_size is None:
+                self.plot_config_area.smooth_size = tk.Spinbox(self.plot_config_area, from_=1, to=50, wrap=False)
+                tk.Label(self.plot_config_area, text='Smooth Window:').grid(column=fields_per_row, row=0, sticky=tk.W)
+                self.plot_config_area.smooth_size.grid(column=fields_per_row, row=1)
+                current_value = tk.StringVar(value='20')
+                self.plot_config_area.smooth_size.configure(command=self.plot_update, textvariable=current_value)
 
             self.plot_config_area.field_boxes = field_boxes
 
     def set_progress_files(self, progress_files):
         self.progress_files = progress_files
         self.file_watchers = [FileWatcher(progress_file_path) for progress_file_path in progress_files]
-        self.update_plot_config_area()
+
 
     def add_progress_file(self, progress_file):
         self.progress_files += [progress_file]
         self.file_watchers += [FileWatcher(progress_file)]
-        self.update_plot_config_area()
+
 
     def plot_update(self):
         legends = []
+        self.ax.clear()
+        self.figure.legends.clear()
         for progress_file_path in self.progress_files:
             with open(progress_file_path, 'r') as progress_file:
                 csv_reader = csv.DictReader(progress_file, delimiter=',')
@@ -130,10 +138,8 @@ class PlotArea(tk.Frame):
                 fields = list(next(csv_reader).keys())
 
                 xlabel = 'time/total_timesteps'
-                smooth_window = 20
+                smooth_window = int(self.plot_config_area.smooth_size.get())
                 selected_fields = []
-                #selected_fields = ["rollout/success_rate (%)", "rollout/ep_rew_mean", "rollout/ep_rew_min",
-                                  #"rollout/ep_rew_max", "rollout/Avg÷MEA (%)"]
                 for field, box in self.plot_config_area.field_boxes.items():
                     if box.var.get():
                         selected_fields.append(field)
@@ -214,7 +220,6 @@ class App(tk.Tk):
 
     def __init__(self):
         super().__init__()
-        #self.geometry("900x700")
         self.title("Rover Plotting Tool")
         self.grid()
         self.resizable(True, True)
@@ -226,23 +231,14 @@ class App(tk.Tk):
 
         tree_label = ttk.Label(left_frame, text="Folders")
         tree_label.grid(column=0, row=0, sticky=tk.W)
+        ttk.Label(left_frame, text="          ").grid(column=1, row=0, sticky=tk.W)
+        ttk.Label(left_frame, text="             ").grid(column=2, row=0, sticky=tk.W)
 
-        # buttons_frame = ttk.Frame(left_frame)
-        # buttons_frame.grid(column=1, row=0, sticky=tk.W)
-        add_button = ttk.Button(left_frame, text="+", command=self.add_folder)
-        add_button.grid(column=1, row=0, sticky=tk.W)
+        add_button = ttk.Button(left_frame, text="+", command=self.add_folder, width=1)
+        add_button.grid(column=2, row=0, sticky=tk.E)
 
-        remove_button = ttk.Button(left_frame, text="-", command=self.remove_folder)
-        remove_button.grid(column=2, row=0, sticky=tk.W)
-
-        # button3 = ttk.Button(left_frame, text='3')
-        # button3.grid(column=3, row=0, sticky=tk.W)
-        # button4 = ttk.Button(left_frame, text='4')
-        # button4.grid(column=4, row=0, sticky=tk.W)
-        # button5 = ttk.Button(left_frame, text='5')
-        # button5.grid(column=5, row=0, sticky=tk.W)
-        # button6 = ttk.Button(left_frame, text='6')
-        # button6.grid(column=6, row=0, sticky=tk.W)
+        remove_button = ttk.Button(left_frame, text="-", command=self.remove_folder, width=1)
+        remove_button.grid(column=3, row=0, sticky=tk.W)
 
         tree = ttk.Treeview(left_frame, selectmode="browse", height=40)
         tree.grid(column=0, row=1, sticky=tk.NSEW, columnspan=4)
@@ -259,10 +255,10 @@ class App(tk.Tk):
         self.tree = tree
 
         plot_button = ttk.Button(left_frame, text='Plot Selected', command=self.plot_selected)
-        plot_button.grid(column=0, row=3, sticky=tk.W)
+        plot_button.grid(column=0, row=3, sticky=tk.EW, columnspan=2)
 
         add_plot_button = ttk.Button(left_frame, text='Add to Plot', command=self.add2plot)
-        add_plot_button.grid(column=1, row=3, sticky=tk.W)
+        add_plot_button.grid(column=2, row=3, sticky=tk.EW, columnspan=3)
 
         return left_frame
 
@@ -277,7 +273,6 @@ class App(tk.Tk):
 
         tab1 = PlotArea(self.tab_control, self, progress_files=[])
         self.tab_plus = tk.Frame(self.tab_control)
-        # tab_plus = PlotArea(self.tab_control, self, progress_files=[])
         self.tab_control.add(tab1, text="Plot 1")
         self.tab_control.add(self.tab_plus, text="+")
         self.tab_control.bind('<<NotebookTabChanged>>', self.new_tab)
@@ -288,8 +283,25 @@ class App(tk.Tk):
         if tab_name.split('.')[-1] == '!frame':
             num_tabs = len(self.tab_control.children)
             tab = PlotArea(self.tab_control, self, progress_files=[])
-            self.tab_control.insert(self.tab_plus, tab, text='Plot' + str(num_tabs))
+            plot_name = simpledialog.askstring('Create New Tab', 'New Tab\'s Name:', initialvalue='Plot' + str(num_tabs))
+            self.tab_control.insert(self.tab_plus, tab, text=plot_name)
             self.tab_control.select(num_tabs - 1)
+
+    def close_tab(self):
+        num_tabs = len(self.tab_control.children)
+        if num_tabs > 2:
+            tab_name = self.tab_control.select()
+            plot_area = self.tab_control.children[tab_name.split('.')[-1]]
+            self.tab_control.select(0)
+            self.tab_control.forget(tab_name)
+            plot_area.destroy()
+        else:
+            messagebox.showwarning(title='Warning', message='Can\'t remove last tab')
+
+    def rename_tab(self):
+        tab_name = self.tab_control.select()
+        plot_name = {'text': simpledialog.askstring('Rename Tab', 'New Tab\'s Name:', initialvalue='')}
+        self.tab_control.tab(tab_name, **plot_name)
 
     def create_main_window(self):
         # Create the menu bar
@@ -297,8 +309,8 @@ class App(tk.Tk):
         self.config(menu=menu_bar)
 
         file_menu = tk.Menu(menu_bar, tearoff=0)
-        file_menu.add_command(label="Open")
-        file_menu.add_command(label="Save")
+        file_menu.add_command(label="Close Current Plot", command=self.close_tab)
+        file_menu.add_command(label="Rename Current Plot", command=self.rename_tab)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.quit)
 
@@ -315,11 +327,6 @@ class App(tk.Tk):
         # Create right frame with tab panel
         right_frame = self.create_plot_side()
         right_frame.grid(column=2, row=0, sticky=tk.NS)
-
-
-    def open_file(self):
-        # Placeholder function for "Open" command
-        pass
 
     def add_folder(self):
         # Open file dialog to select folder
@@ -355,15 +362,13 @@ class App(tk.Tk):
                 progress_files = [osp.join(self.tree.item(self.tree.parent(idx))['text'], self.tree.item(idx)['text'],
                                            'progress.csv') for idx in self.tree.selection()]
                 plot_area.set_progress_files(progress_files)
-                plot_area.ax.clear()
-                plot_area.figure.legends.clear()
+                plot_area.update_plot_config_area()
                 plot_area.plot_update()
 
     def add2plot(self):
         if not len(self.tree.selection()) == 0:
             is_parent_node = [x in self.tree.get_children() for x in self.tree.selection()]
             if sum(is_parent_node) == 0:  # root exp folders have no exp to plot
-                progress_files = []
                 tab_name = self.tab_control.select()
                 plot_area = self.tab_control.children[tab_name.split('.')[-1]]
                 current_exps = [exp.split('/')[-2] for exp in plot_area.progress_files]
@@ -372,9 +377,6 @@ class App(tk.Tk):
                         plot_area.add_progress_file(osp.join(self.tree.item(self.tree.parent(idx))['text'],
                                                              self.tree.item(idx)['text'], 'progress.csv'))
 
-
-                plot_area.ax.clear()
-                plot_area.figure.legends.clear()
                 plot_area.plot_update()
 
 
