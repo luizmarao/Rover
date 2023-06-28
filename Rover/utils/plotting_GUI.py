@@ -338,6 +338,7 @@ class App(tk.Tk):
             root_folder_iid = self.num_tree_items
             self.num_tree_items += 1
             folder_content = os.listdir(folder_path)
+            folder_content.sort()
             exp_folders = []
             for content in folder_content:
                 content_path = osp.join(folder_path, content)
