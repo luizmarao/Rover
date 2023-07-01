@@ -109,11 +109,19 @@ class PlotArea(tk.Frame):
                     field_boxes[field] = box
 
             if self.plot_config_area.smooth_size is None:
+                ttk.Separator(self.plot_config_area, orient='vertical').grid(column=fields_per_row, row=0, rowspan=4,
+                                                                             sticky=tk.NS)
                 self.plot_config_area.smooth_size = tk.Spinbox(self.plot_config_area, from_=1, to=50, wrap=False)
-                tk.Label(self.plot_config_area, text='Smooth Window:').grid(column=fields_per_row, row=0, sticky=tk.W)
-                self.plot_config_area.smooth_size.grid(column=fields_per_row, row=1)
+                tk.Label(self.plot_config_area, text='Smooth Window:').grid(column=fields_per_row+1, row=0, sticky=tk.W)
+                self.plot_config_area.smooth_size.grid(column=fields_per_row+1, row=1)
                 current_value = tk.StringVar(value='20')
                 self.plot_config_area.smooth_size.configure(command=self.plot_update, textvariable=current_value)
+                non_smooth_in_bg_var = tk.IntVar()
+                self.non_smooth_in_bg_box = tk.Checkbutton(self.plot_config_area, text='keep data as smooth bg',
+                                                           onvalue=1, offvalue=0, variable=non_smooth_in_bg_var)
+                self.non_smooth_in_bg_box.var = non_smooth_in_bg_var
+                self.non_smooth_in_bg_box.configure(command=self.plot_update)
+                self.non_smooth_in_bg_box.grid(column=fields_per_row+1, row=2, sticky=tk.W)
 
             self.plot_config_area.field_boxes = field_boxes
 
@@ -131,6 +139,7 @@ class PlotArea(tk.Frame):
         legends = []
         self.ax.clear()
         self.figure.legends.clear()
+        color = 0
         for file_idx, progress_file_path in enumerate(self.progress_files):
             with open(progress_file_path, 'r') as progress_file:
                 csv_reader = csv.DictReader(progress_file, delimiter=',')
@@ -172,31 +181,47 @@ class PlotArea(tk.Frame):
                         yvalues[sf].append(float(row[sf]))
 
                 if smooth_window > 1:
-                    for sf in selected_fields:
-                        yvalues[sf] = moving_average(yvalues[sf], smooth_window)
-                    xvalues = xvalues[smooth_window - 1:]
+                    if not self.non_smooth_in_bg_box.var.get():
+                        for sf in selected_fields:
+                            yvalues[sf] = moving_average(yvalues[sf], smooth_window)
+                        xvalues = xvalues[smooth_window - 1:]
+                    else:
+                        syvalues = {sf: moving_average(yvalues[sf], smooth_window) for sf in selected_fields}
+                        sxvalues = xvalues[smooth_window - 1:]
+
+
                 last_index = 0
                 first_time = True
 
                 for i, sf in enumerate(selected_fields):
                     if xmax == 0:
-                        if first_time:
+                        if self.non_smooth_in_bg_box.var.get():
+                            aux_plot, = self.ax.plot(xvalues, yvalues[sf], line_type, color='C'+str(color),
+                                                     alpha=0.6, label='name')
+                            aux_plot_s, = self.ax.plot(sxvalues, syvalues[sf], line_type, color='C'+str(color),
+                                                       label='name')
+                            self.line_plot_list.append(aux_plot)
+                            self.line_plot_list.append(aux_plot_s)
+                        else:
                             aux_plot, = self.ax.plot(xvalues, yvalues[sf], line_type, label='name')
                             self.line_plot_list.append(aux_plot)
-                        else:
-                            self.line_plot_list[i].set_ydata(yvalues[sf])
-                            self.line_plot_list[i].set_xdata(xvalues)
-                            max_y = np.max([max_y, np.max(yvalues[sf])])
-                            min_y = np.min([min_y, np.min(yvalues[sf])])
                     else:
-                        if first_time:
-                            aux_plot = self.ax.plot(xvalues[:last_index], yvalues[sf][:last_index], line_type, label='name')
+                        if self.non_smooth_in_bg_box.var.get():
+                            aux_plot = self.ax.plot(xvalues[:last_index], yvalues[sf][:last_index], line_type,
+                                                    color='C'+str(color), alpha=0.6, label='name')
+                            aux_plot_s = self.ax.plot(sxvalues[:last_index], syvalues[sf][:last_index], line_type,
+                                                    color='C' + str(color), label='name')
                             self.line_plot_list.append(aux_plot)
+                            self.line_plot_list.append(aux_plot_s)
                         else:
-                            self.line_plot_list[i].set_ydata(yvalues[sf][:last_index])
-                            self.line_plot_list[i].set_xdata(xvalues[:last_index])
-                            max_y = np.max([max_y, np.max(yvalues[sf][:last_index])])
-                            min_y = np.min([min_y, np.min(yvalues[sf][:last_index])])
+                            aux_plot = self.ax.plot(xvalues[:last_index], yvalues[sf][:last_index], line_type,
+                                                    label='name')
+                            self.line_plot_list.append(aux_plot)
+                    if color == 9:
+                        color = 0
+                    else:
+                        color += 1
+
                 if first_time:
                     self.ax.ticklabel_format(style='sci', scilimits=(0, 3))
                     self.ax.grid(True)
