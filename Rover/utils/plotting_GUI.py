@@ -131,7 +131,7 @@ class PlotArea(tk.Frame):
         legends = []
         self.ax.clear()
         self.figure.legends.clear()
-        for progress_file_path in self.progress_files:
+        for file_idx, progress_file_path in enumerate(self.progress_files):
             with open(progress_file_path, 'r') as progress_file:
                 csv_reader = csv.DictReader(progress_file, delimiter=',')
 
@@ -149,6 +149,14 @@ class PlotArea(tk.Frame):
                 dotted_line_re = re.compile(r'\*')
                 dash_dotted_line_re = re.compile(r'\*-')
                 line_types = {selected_fields[-1]: '-'}
+                line_type = '-'
+                line_type_repeated = int(file_idx * len(selected_fields) / 9)
+                if line_type_repeated == 1:
+                    line_type = '--'
+                elif line_type_repeated == 2:
+                    line_type = ':'
+                elif line_type_repeated == 3:
+                    line_type = ','
                 title = self.title_field.get()
                 xlabel_custom = ''
                 ylabel = ''
@@ -173,7 +181,7 @@ class PlotArea(tk.Frame):
                 for i, sf in enumerate(selected_fields):
                     if xmax == 0:
                         if first_time:
-                            aux_plot, = self.ax.plot(xvalues, yvalues[sf], label='name')
+                            aux_plot, = self.ax.plot(xvalues, yvalues[sf], line_type, label='name')
                             self.line_plot_list.append(aux_plot)
                         else:
                             self.line_plot_list[i].set_ydata(yvalues[sf])
@@ -182,7 +190,7 @@ class PlotArea(tk.Frame):
                             min_y = np.min([min_y, np.min(yvalues[sf])])
                     else:
                         if first_time:
-                            aux_plot = self.ax.plot(xvalues[:last_index], yvalues[sf][:last_index], label='name')
+                            aux_plot = self.ax.plot(xvalues[:last_index], yvalues[sf][:last_index], line_type, label='name')
                             self.line_plot_list.append(aux_plot)
                         else:
                             self.line_plot_list[i].set_ydata(yvalues[sf][:last_index])
