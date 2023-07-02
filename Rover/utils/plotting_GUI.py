@@ -104,7 +104,7 @@ class PlotArea(tk.Frame):
                     if field in default_fields:
                         box.select()
 
-                    box.configure(command=self.plot_update)
+                    box.configure(command=self.parameter_changed)
                     box.grid(column=idx % fields_per_row, row=int(idx / fields_per_row), sticky=tk.W)
                     field_boxes[field] = box
 
@@ -115,15 +115,31 @@ class PlotArea(tk.Frame):
                 tk.Label(self.plot_config_area, text='Smooth Window:').grid(column=fields_per_row+1, row=0, sticky=tk.W)
                 self.plot_config_area.smooth_size.grid(column=fields_per_row+1, row=1)
                 current_value = tk.StringVar(value='20')
-                self.plot_config_area.smooth_size.configure(command=self.plot_update, textvariable=current_value)
+                self.plot_config_area.smooth_size.configure(command=self.parameter_changed, textvariable=current_value)
                 non_smooth_in_bg_var = tk.IntVar()
                 self.non_smooth_in_bg_box = tk.Checkbutton(self.plot_config_area, text='keep data as smooth bg',
                                                            onvalue=1, offvalue=0, variable=non_smooth_in_bg_var)
                 self.non_smooth_in_bg_box.var = non_smooth_in_bg_var
-                self.non_smooth_in_bg_box.configure(command=self.plot_update)
+                self.non_smooth_in_bg_box.configure(command=self.parameter_changed)
                 self.non_smooth_in_bg_box.grid(column=fields_per_row+1, row=2, sticky=tk.W)
 
+                group_exps_var = tk.IntVar()
+                self.group_exps_box = tk.Checkbutton(self.plot_config_area, text='group exps',
+                                                           onvalue=1, offvalue=0, variable=group_exps_var)
+                self.group_exps_box.var = group_exps_var
+                self.group_exps_box.configure(command=self.parameter_changed)
+                self.group_exps_box.grid(column=fields_per_row + 1, row=3, sticky=tk.W)
+
             self.plot_config_area.field_boxes = field_boxes
+
+    def parameter_changed(self):
+        if not self.group_exps_box.var.get():
+            self.non_smooth_in_bg_box.configure(state='normal')
+            self.plot_update()
+        else:
+            self.non_smooth_in_bg_box.deselect()
+            self.non_smooth_in_bg_box.configure(state='disabled')
+            self.group_plot_update()
 
     def set_progress_files(self, progress_files):
         self.progress_files = progress_files
@@ -140,18 +156,19 @@ class PlotArea(tk.Frame):
         self.ax.clear()
         self.figure.legends.clear()
         color = 0
+        xlabel = 'time/total_timesteps'
+        smooth_window = int(self.plot_config_area.smooth_size.get())
+        selected_fields = []
+        for field, box in self.plot_config_area.field_boxes.items():
+            if box.var.get():
+                selected_fields.append(field)
         for file_idx, progress_file_path in enumerate(self.progress_files):
             with open(progress_file_path, 'r') as progress_file:
                 csv_reader = csv.DictReader(progress_file, delimiter=',')
 
                 fields = list(next(csv_reader).keys())
 
-                xlabel = 'time/total_timesteps'
-                smooth_window = int(self.plot_config_area.smooth_size.get())
-                selected_fields = []
-                for field, box in self.plot_config_area.field_boxes.items():
-                    if box.var.get():
-                        selected_fields.append(field)
+
                 is_selecting_fields = False
                 solid_line_re = re.compile('-')
                 dashed_line_re = re.compile('--')
@@ -191,7 +208,6 @@ class PlotArea(tk.Frame):
 
 
                 last_index = 0
-                first_time = True
 
                 for i, sf in enumerate(selected_fields):
                     if xmax == 0:
@@ -200,52 +216,104 @@ class PlotArea(tk.Frame):
                                                      alpha=0.6, label='name')
                             aux_plot_s, = self.ax.plot(sxvalues, syvalues[sf], line_type, color='C'+str(color),
                                                        label='name')
-                            self.line_plot_list.append(aux_plot)
-                            self.line_plot_list.append(aux_plot_s)
+                            # self.line_plot_list.append(aux_plot)
+                            # self.line_plot_list.append(aux_plot_s)
                         else:
                             aux_plot, = self.ax.plot(xvalues, yvalues[sf], line_type, label='name')
-                            self.line_plot_list.append(aux_plot)
+                            # self.line_plot_list.append(aux_plot)
                     else:
                         if self.non_smooth_in_bg_box.var.get():
                             aux_plot = self.ax.plot(xvalues[:last_index], yvalues[sf][:last_index], line_type,
                                                     color='C'+str(color), alpha=0.6, label='name')
                             aux_plot_s = self.ax.plot(sxvalues[:last_index], syvalues[sf][:last_index], line_type,
                                                     color='C' + str(color), label='name')
-                            self.line_plot_list.append(aux_plot)
-                            self.line_plot_list.append(aux_plot_s)
+                            # self.line_plot_list.append(aux_plot)
+                            # self.line_plot_list.append(aux_plot_s)
                         else:
                             aux_plot = self.ax.plot(xvalues[:last_index], yvalues[sf][:last_index], line_type,
                                                     label='name')
-                            self.line_plot_list.append(aux_plot)
+                            # self.line_plot_list.append(aux_plot)
                     if color == 9:
                         color = 0
                     else:
                         color += 1
 
-                if first_time:
-                    self.ax.ticklabel_format(style='sci', scilimits=(0, 3))
-                    self.ax.grid(True)
-                    self.ax.set_xlabel(xlabel) if xlabel_custom == '' else self.ax.set_xlabel(xlabel_custom)
-                    if not ylabel == '':
-                        self.ax.set_ylabel(ylabel)
-                    self.ax.set_title(title)
-                    if len(self.progress_files) > 1:
-                        extra_legend = progress_file_path.split('/')[-2].split('-')[0] + '/'
-                        legends += [extra_legend + legend for legend in selected_fields.copy()]
-                    else:
-                        legends += selected_fields.copy()
-                    # self.figure.legend(legends).set_draggable(True)
-                    # plt.ion()
-                    # self.figure.show()
+                self.ax.ticklabel_format(style='sci', scilimits=(0, 3))
+                self.ax.grid(True)
+                self.ax.set_xlabel(xlabel) if xlabel_custom == '' else self.ax.set_xlabel(xlabel_custom)
+                if not ylabel == '':
+                    self.ax.set_ylabel(ylabel)
+                self.ax.set_title(title)
+                if len(self.progress_files) > 1:
+                    extra_legend = progress_file_path.split('/')[-2].split('-')[0] + '/'
+                    legends += [extra_legend + legend for legend in selected_fields.copy()]
                 else:
-                    self.ax.set_xlim(0, xvalues[-1] * 1.01 if xmax == 0 else xvalues[:last_index][-1] * 1.01)
-                    self.ax.set_ylim(min_y * 1.01, max_y * 1.01)
-                    #self.ax.draw()
-                    # plt.pause(0.001)
-                    # time.sleep(1.)
-                    #self.figure.canvas.flush_events()
-                first_time = False
+                    legends += selected_fields.copy()
+
         self.figure.legend(legends).set_draggable(True)
+        self.canvas.draw()
+
+    def group_plot_update(self):
+        self.ax.clear()
+        self.figure.legends.clear()
+        color = 0
+        selected_fields = []
+        for field, box in self.plot_config_area.field_boxes.items():
+            if box.var.get():
+                selected_fields.append(field)
+
+        title = self.title_field.get()
+        xlabel_custom = ''
+        ylabel = ''
+        xlabel = 'time/total_timesteps'
+
+        yvalues = {f: [] for f in selected_fields}
+        legend = []
+
+        for file_idx, progress_file_path in enumerate(self.progress_files):
+            with open(progress_file_path, 'r') as progress_file:
+                csv_reader = csv.DictReader(progress_file, delimiter=',')
+                xvalues = []
+                progress_file.seek(0)
+                next(csv_reader)
+
+                for sf in selected_fields:
+                    yvalues[sf].append([])
+
+                for row in csv_reader:
+                    xvalues.append(float(row[xlabel]))
+                    for sf in selected_fields:
+                        yvalues[sf][file_idx].append(float(row[sf]))
+
+        for i, sf in enumerate(selected_fields):
+            line_type = '-'
+            line_type_repeated = int(len(selected_fields) / 9)
+            if line_type_repeated == 1:
+                line_type = '--'
+            elif line_type_repeated == 2:
+                line_type = ':'
+            elif line_type_repeated == 3:
+                line_type = ','
+
+            yvals = np.asarray(yvalues[sf])
+            yvals_mean = yvals.mean(axis=0)
+            yvals_std = yvals.std(axis=0)
+            self.ax.plot(xvalues, yvals_mean, line_type, color='C'+str(color), label=sf)
+            self.ax.fill_between(xvalues, yvals_mean - yvals_std, yvals_mean + yvals_std, color='C'+str(color),
+                                 alpha=0.2)
+
+            if color == 9:
+                color = 0
+            else:
+                color += 1
+
+        self.ax.ticklabel_format(style='sci', scilimits=(0, 3))
+        self.ax.grid(True)
+        self.ax.set_xlabel(xlabel) if xlabel_custom == '' else self.ax.set_xlabel(xlabel_custom)
+        if not ylabel == '':
+            self.ax.set_ylabel(ylabel)
+        self.ax.set_title(title)
+        self.figure.legend().set_draggable(True)
         self.canvas.draw()
 
 class App(tk.Tk):
@@ -397,7 +465,7 @@ class App(tk.Tk):
                                            'progress.csv') for idx in self.tree.selection()]
                 plot_area.set_progress_files(progress_files)
                 plot_area.update_plot_config_area()
-                plot_area.plot_update()
+                plot_area.parameter_changed()
 
     def add2plot(self):
         if not len(self.tree.selection()) == 0:
@@ -411,7 +479,7 @@ class App(tk.Tk):
                         plot_area.add_progress_file(osp.join(self.tree.item(self.tree.parent(idx))['text'],
                                                              self.tree.item(idx)['text'], 'progress.csv'))
 
-                plot_area.plot_update()
+                plot_area.parameter_changed()
 
 
 if __name__ == "__main__":
