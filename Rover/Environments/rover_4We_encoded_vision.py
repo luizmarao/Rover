@@ -43,10 +43,10 @@ class Rover4WeEncodedVisionv0Env(RoverRobotrek4Wev2Env):
         self.encoder_name = kwargs.pop('encoder_name')
         encoder_input_size = self.encoder_name.split('g')[1].split('_', maxsplit=1)[0]
         assert img_reduced_size[0] == int(encoder_input_size), "Expected an encoder with name in the same format as " \
-                                                               "'EC g32_1c_4b_128f_128a' and an squared image reduced size, " \
-                                                               "like (32, 32)\nReduced image size{} incompatible with encoder " \
-                                                               "input size{}".format(img_reduced_size,
-                                                                                     encoder_input_size)
+                                                               "'EC g32_1c_4b_128f_128a' and an squared image reduced" \
+                                                               " size, like (32, 32)\nReduced image size{} " \
+                                                               "incompatible with encoder input size {}".format(
+            img_reduced_size, encoder_input_size)
         assert self.encoder_name is not None, 'You have not chose any encoder. If you do not want to chose one, you ' \
                                               'should run Rover4We latest version instead of Rover4WeEncodedVision'
         encoder_path = os.path.join(os.path.dirname(__file__), 'assets', 'VisionEncoders', self.encoder_name)

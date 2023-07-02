@@ -863,7 +863,7 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
         
         Parâmetros de retorno:
             -> on_base = o sensor detectou que o rover se encontra em alguma base
-            -> n_spot = qual base que o rover se encontra (apenas para atualiuzação do objetivo)
+            -> n_spot = qual base que o rover se encontra (apenas para atualização do objetivo)
         '''
         if (39.5 <= gps_exact[0] <= 40.5) and (19.5 <= gps_exact[1] <= 20.5):
             return 1, 0
