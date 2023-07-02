@@ -52,6 +52,12 @@ def main(args):
     arg_parser = common_arg_parser()
     args, unknown_args = arg_parser.parse_known_args(args)
     extra_args = parse_cmdline_kwargs(unknown_args)
+    if isinstance(args.img_red_size, str):
+        args.img_red_size = eval(args.img_red_size)
+    if isinstance(args.conv_layers, str):
+        args.conv_layers = eval(args.conv_layers)
+    if isinstance(args.net_arch, str):
+        args.net_arch = eval(args.net_arch)
 
     os.environ["MUJOCO_GL"] = 'egl'  # Set mujoco rendering to dedicated GPU
     EXPERIMENT_NAME = args.exp_name  # ns=num steps, bs=batch size, e=epochs, gr=goal_rwd
