@@ -2,6 +2,7 @@ import os
 from typing import Tuple
 
 import keras
+import torch as th
 import numpy as np
 from gymnasium import spaces
 
@@ -9,6 +10,11 @@ from Rover.Environments.rover_4We_v2 import RoverRobotrek4Wev2Env
 
 
 class Rover4WeEncodedVisionv0Env(RoverRobotrek4Wev2Env):
+    '''
+    This environment extends the Rover4We environment to use a pre-trained encoder after acquiring the camera image.
+    Thus, instead of the image, the visual observation is composed by the encoded image.
+    The loaded encoder must match the reduced image size, and the env is defined to load a pytorch model by default.
+    '''
     def __init__(
             self,
             use_ramps: bool = True,
@@ -50,8 +56,9 @@ class Rover4WeEncodedVisionv0Env(RoverRobotrek4Wev2Env):
         assert self.encoder_name is not None, 'You have not chose any encoder. If you do not want to chose one, you ' \
                                               'should run Rover4We latest version instead of Rover4WeEncodedVision'
         encoder_path = os.path.join(os.path.dirname(__file__), 'assets', 'VisionEncoders', self.encoder_name)
-        self.encoder = keras.models.load_model(encoder_path)
-        self.encoder.compile()
+        self.encoder = th.load(encoder_path)
+        # self.encoder = keras.models.load_model(encoder_path)
+        # self.encoder.compile()
         super().__init__(
             use_ramps=use_ramps,
             use_posts=use_posts,
@@ -82,15 +89,18 @@ class Rover4WeEncodedVisionv0Env(RoverRobotrek4Wev2Env):
             verbose=verbose,
             **kwargs
         )
+        self.encoder.to('cuda')
 
     def make_env_observation_space(self):
-        self.observation_space_size = np.product(self.encoder.output_shape[1:]) + 14
+
+        shape = np.shape(self.encoder(th.ones((1, self.img_reduced_size[0], self.img_reduced_size[0]))).detach().numpy())
+        self.observation_space_size = np.product(shape) + 14
         return spaces.Box(low=-np.inf, high=np.inf, shape=(self.observation_space_size,), dtype=np.float64)
 
     def camera_rendering(self):
         gray_normalized = super().camera_rendering()
-        expanded_dim_gray_normalized = np.expand_dims(gray_normalized, (0, -1))
-        encoded = np.asarray(self.encoder(expanded_dim_gray_normalized))
+        expanded_dim_gray_normalized = th.as_tensor(np.expand_dims(gray_normalized, (0, -1))).to('cuda')
+        encoded = self.encoder(expanded_dim_gray_normalized).to('cpu').detach().numpy()
         flatten = np.ndarray.flatten(encoded)
         return flatten
 
