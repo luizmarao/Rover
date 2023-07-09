@@ -58,8 +58,8 @@ class Rover4WePCAVisionv0Env(RoverRobotrek4Wev2Env):
                                               'you should run Rover4We latest version instead of Rover4WePCAVision'
         encoder_path = os.path.join(os.path.dirname(__file__), 'assets', 'VisionPCA', self.encoder_name)
         self.encoder = PCA()
-        self.encoder.mean_ = np.load(encoder_path + '_mean')
-        self.encoder.components_ = np.load(encoder_path + '_components')
+        self.encoder.mean_ = np.load(encoder_path + '_mean.npy')
+        self.encoder.components_ = np.load(encoder_path + '_components.npy')
         super().__init__(
             use_ramps=use_ramps,
             use_posts=use_posts,
