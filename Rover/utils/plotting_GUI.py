@@ -155,6 +155,8 @@ class PlotArea(tk.Frame):
         legends = []
         self.ax.clear()
         self.figure.legends.clear()
+        self.figure.clear()
+        self.ax = self.figure.add_subplot(111)
         color = 0
         xlabel = 'time/total_timesteps'
         smooth_window = int(self.plot_config_area.smooth_size.get())
@@ -163,6 +165,10 @@ class PlotArea(tk.Frame):
             if box.var.get():
                 selected_fields.append(field)
         for file_idx, progress_file_path in enumerate(self.progress_files):
+            if len(self.progress_files) > 1:
+                extra_label = progress_file_path.split('/')[-2].split('-')[0] + '/'
+            else:
+                extra_label = ''
             with open(progress_file_path, 'r') as progress_file:
                 csv_reader = csv.DictReader(progress_file, delimiter=',')
 
@@ -213,20 +219,20 @@ class PlotArea(tk.Frame):
                     if xmax == 0:
                         if self.non_smooth_in_bg_box.var.get():
                             aux_plot, = self.ax.plot(xvalues, yvalues[sf], line_type, color='C'+str(color),
-                                                     alpha=0.6, label='name')
+                                                     alpha=0.6)
                             aux_plot_s, = self.ax.plot(sxvalues, syvalues[sf], line_type, color='C'+str(color),
-                                                       label='name')
+                                                       label=extra_label + sf)
                             # self.line_plot_list.append(aux_plot)
                             # self.line_plot_list.append(aux_plot_s)
                         else:
-                            aux_plot, = self.ax.plot(xvalues, yvalues[sf], line_type, label='name')
+                            aux_plot, = self.ax.plot(xvalues, yvalues[sf], line_type, label=extra_label + sf)
                             # self.line_plot_list.append(aux_plot)
                     else:
                         if self.non_smooth_in_bg_box.var.get():
                             aux_plot = self.ax.plot(xvalues[:last_index], yvalues[sf][:last_index], line_type,
-                                                    color='C'+str(color), alpha=0.6, label='name')
+                                                    color='C'+str(color), alpha=0.6)
                             aux_plot_s = self.ax.plot(sxvalues[:last_index], syvalues[sf][:last_index], line_type,
-                                                    color='C' + str(color), label='name')
+                                                    color='C' + str(color), label=extra_label + sf)
                             # self.line_plot_list.append(aux_plot)
                             # self.line_plot_list.append(aux_plot_s)
                         else:
@@ -244,14 +250,11 @@ class PlotArea(tk.Frame):
                 if not ylabel == '':
                     self.ax.set_ylabel(ylabel)
                 self.ax.set_title(title)
-                if len(self.progress_files) > 1:
-                    extra_legend = progress_file_path.split('/')[-2].split('-')[0] + '/'
-                    legends += [extra_legend + legend for legend in selected_fields.copy()]
-                else:
-                    legends += selected_fields.copy()
 
-        self.figure.legend(legends).set_draggable(True)
+        #self.figure.legend(legends).set_draggable(True)
+        self.figure.legend().set_draggable(True)
         self.canvas.draw()
+
 
     def group_plot_update(self):
         self.ax.clear()
