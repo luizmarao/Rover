@@ -112,7 +112,7 @@ def main(args):
     if rover_env.startswith('Rover4We'):
         env_kwargs.update({"width": 440, "height": 270, "save_images": args.save_images, "verbose": args.env_verbose,
                   "img_reduced_size": args.img_red_size})
-        if not 'Encoded' in rover_env:
+        if (not 'Encoded' in rover_env) and (not 'PCA' in rover_env):
             if args.networks_architecture == 'RovernetClassic':
                 network_type = "CnnPolicy"
                 policy_kwargs.update({'features_extractor_class': RovernetClassic,
