@@ -3,7 +3,7 @@ from typing import Tuple
 
 import numpy as np
 from gymnasium import spaces
-from cuml import PCA
+import torch as th
 
 from Rover.Environments.rover_4We_v2 import RoverRobotrek4Wev2Env
 
@@ -47,6 +47,7 @@ class Rover4WePCAVisionv0Env(RoverRobotrek4Wev2Env):
     ):
         self.encoder_name = kwargs.pop('encoder_name')
         encoder_input_size = self.encoder_name.split('_')[1]
+        #img_reduced_size = eval(img_reduced_size)
         assert img_reduced_size[0] == int(encoder_input_size), "Expected a PCA encoder with name in the same format " \
                                                                "as 'PCA_32_xxx' and an squared image reduced"\
                                                                " size, like (32, 32)\nReduced image size{} " \
@@ -55,9 +56,9 @@ class Rover4WePCAVisionv0Env(RoverRobotrek4Wev2Env):
         assert self.encoder_name is not None, 'You have not chose any PCA encoder. If you do not want to chose one, ' \
                                               'you should run Rover4We latest version instead of Rover4WePCAVision'
         encoder_path = os.path.join(os.path.dirname(__file__), 'assets', 'VisionPCA', self.encoder_name)
-        self.encoder = PCA()
-        self.encoder.mean_ = np.load(encoder_path + '_mean.npy')
-        self.encoder.components_ = np.load(encoder_path + '_components.npy')
+        mean = np.load(encoder_path + '_mean.npy')
+        components = np.load(encoder_path + '_components.npy')
+        self.encoder = self.PCA(mean, components)
         super().__init__(
             use_ramps=use_ramps,
             use_posts=use_posts,
@@ -89,14 +90,24 @@ class Rover4WePCAVisionv0Env(RoverRobotrek4Wev2Env):
             **kwargs
         )
     def make_env_observation_space(self):
-        self.observation_space_size = len(self.encoder.components_) + 14
+        self.observation_space_size = len(self.encoder.components) + 14
         return spaces.Box(low=-np.inf, high=np.inf, shape=(self.observation_space_size,), dtype=np.float64)
 
     def camera_rendering(self):
         gray_normalized = super().camera_rendering()
-        encoded = self.encoder.transform(gray_normalized.reshape((1, -1)))
+        encoded = self.encoder.transform(th.as_tensor(gray_normalized.reshape((1, -1))).to('cuda')).to('cpu').detach().numpy()
         flatten = np.ndarray.flatten(encoded)
         return flatten
 
     def format_obs(self, lin_obs, img_obs):
         return np.concatenate([lin_obs, img_obs])
+
+    class PCA():
+        def __init__(self, mean, components):
+            self.mean = th.as_tensor(mean).to('cuda')
+            self.components = th.as_tensor(components).to('cuda')
+
+        def transform(self, x):
+            x = x - self.mean
+            x_transformed = th.matmul(x, th.transpose(self.components, 0, 1))
+            return x_transformed

@@ -18,8 +18,6 @@ setup(
         'torch==2.0.1',
         'mujoco==2.3.3',
         'opencv-python==4.7.0.72',
-        'cuml-cu11==23.6.0',
-        'cupy-cuda11x==12.1.0',
         'tqdm==4.65.0',
         'imageio==2.27.0',
         'imageio-ffmpeg==0.4.8',
