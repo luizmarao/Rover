@@ -1,11 +1,9 @@
 import os
 from typing import Tuple
 
-import keras
-import torch as th
 import numpy as np
 from gymnasium import spaces
-from sklearn.decomposition import PCA
+from cuml import PCA
 
 from Rover.Environments.rover_4We_v2 import RoverRobotrek4Wev2Env
 
