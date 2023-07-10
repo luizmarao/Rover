@@ -1,7 +1,6 @@
 import os
 from typing import Tuple
 
-import keras
 import torch as th
 import numpy as np
 from gymnasium import spaces
