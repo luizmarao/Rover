@@ -232,3 +232,13 @@ def colorize(string, color, bold=False, highlight=False):
     attr.append(str(num))
     if bold: attr.append('1')
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
+
+class Rover4Wv1RedObsEnv(Rover4Wv1Env):
+
+
+    def make_env_observation_space(self):
+        self.observation_space_size = 11
+        return spaces.Box(low=-np.inf, high=np.inf, shape=(self.observation_space_size,), dtype=np.float64)
+
+    def format_obs(self, lin_obs, img_obs):
+        return super().format_obs(lin_obs, img_obs)[:-3]

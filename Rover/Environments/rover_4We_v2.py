@@ -991,3 +991,12 @@ def colorize(string, color, bold=False, highlight=False):
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
 
 
+class RoverRobotrek4Wev2RedObsEnv(RoverRobotrek4Wev2Env):
+
+    def make_env_observation_space(self):
+        self.observation_space_size = np.product(self.img_reduced_size) + 11
+        return spaces.Box(low=-np.inf, high=np.inf, shape=(self.observation_space_size,), dtype=np.float64)
+
+    def _get_obs(self):
+        gps_exact, ob, img = super()._get_obs()
+        return gps_exact, ob[:-3], img
