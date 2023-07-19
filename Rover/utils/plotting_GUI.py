@@ -58,6 +58,8 @@ class PlotArea(tk.Frame):
         self.line_plot_list = []
         self.figure = Figure(figsize=(10, 5))
         self.ax = self.figure.add_subplot(111)
+        self.figure.subplots_adjust(left=0.03, right=0.99, top=0.95, bottom=0.08)
+
 
         separator = ttk.Separator(self, orient='horizontal')
         separator.pack(anchor=tk.NW, fill=tk.X)
@@ -152,7 +154,8 @@ class PlotArea(tk.Frame):
 
 
     def plot_update(self):
-        legends = []
+        max_x_val = -np.inf
+        min_x_val = np.inf
         self.ax.clear()
         self.figure.legends.clear()
         self.figure.clear()
@@ -216,6 +219,8 @@ class PlotArea(tk.Frame):
                 last_index = 0
 
                 for i, sf in enumerate(selected_fields):
+                    max_x_val = max(max_x_val, max(xvalues))
+                    min_x_val = min(min_x_val, min(xvalues))
                     if xmax == 0:
                         if self.non_smooth_in_bg_box.var.get():
                             aux_plot, = self.ax.plot(xvalues, yvalues[sf], line_type, color='C'+str(color),
@@ -244,19 +249,23 @@ class PlotArea(tk.Frame):
                     else:
                         color += 1
 
-                self.ax.ticklabel_format(style='sci', scilimits=(0, 3))
-                self.ax.grid(True)
-                self.ax.set_xlabel(xlabel) if xlabel_custom == '' else self.ax.set_xlabel(xlabel_custom)
-                if not ylabel == '':
-                    self.ax.set_ylabel(ylabel)
-                self.ax.set_title(title)
+        self.ax.ticklabel_format(style='sci', scilimits=(0, 3))
+        self.ax.grid(True)
+        self.ax.set_xlabel(xlabel) if xlabel_custom == '' else self.ax.set_xlabel(xlabel_custom)
+        if not ylabel == '':
+            self.ax.set_ylabel(ylabel)
+        self.ax.set_title(title)
+        self.ax.set_xlim(xmin=min(min_x_val, 0), xmax=max_x_val+1)
 
         #self.figure.legend(legends).set_draggable(True)
+        self.ax.xaxis.major.formatter._useMathText = True
         self.figure.legend().set_draggable(True)
         self.canvas.draw()
 
 
     def group_plot_update(self):
+        max_x_val = -np.inf
+        min_x_val = np.inf
         self.ax.clear()
         self.figure.legends.clear()
         color = 0
@@ -289,6 +298,8 @@ class PlotArea(tk.Frame):
                         yvalues[sf][file_idx].append(float(row[sf]))
 
         for i, sf in enumerate(selected_fields):
+            max_x_val = max(max_x_val, max(xvalues))
+            min_x_val = min(min_x_val, min(xvalues))
             line_type = '-'
             line_type_repeated = int(len(selected_fields) / 9)
             if line_type_repeated == 1:
@@ -316,6 +327,8 @@ class PlotArea(tk.Frame):
         if not ylabel == '':
             self.ax.set_ylabel(ylabel)
         self.ax.set_title(title)
+        self.ax.set_xlim(xmin=min(min_x_val, 0), xmax=max_x_val+1)
+        self.ax.xaxis.major.formatter._useMathText = True
         self.figure.legend().set_draggable(True)
         self.canvas.draw()
 
