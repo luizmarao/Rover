@@ -56,9 +56,9 @@ class PlotArea(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         self.line_plot_list = []
-        self.figure = Figure(figsize=(10, 5))
+        self.figure = Figure(figsize=(10, 6))
         self.ax = self.figure.add_subplot(111)
-        self.figure.subplots_adjust(left=0.03, right=0.99, top=0.95, bottom=0.08)
+        self.figure.subplots_adjust(left=0.05, right=0.98, top=0.95, bottom=0.08)
 
 
         separator = ttk.Separator(self, orient='horizontal')
@@ -78,11 +78,12 @@ class PlotArea(tk.Frame):
         self.plot_config_area.pack(anchor=tk.NW, fill=tk.BOTH)
 
         self.canvas = FigureCanvasTkAgg(self.figure, self)
-        self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        #self.canvas.get_tk_widget().pack(side=tk.BOTTOM)#, fill=tk.BOTH, expand=True)
+        self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.Y, expand=True)  # , fill=tk.BOTH, expand=True)
 
         self.toolbar = NavigationToolbar2Tk(self.canvas, self)
         self.toolbar.update()
-        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH)
+        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.Y)
 
 
     def update_plot_config_area(self):
