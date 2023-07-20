@@ -97,8 +97,9 @@ class PlotArea(tk.Frame):
                 csv_reader = csv.DictReader(progress_file, delimiter=',')
 
                 fields = list(next(csv_reader).keys())
-                default_fields = ["rollout/success_rate (%)", "rollout/ep_rew_mean", "rollout/ep_rew_min",
-                                  "rollout/ep_rew_max", "rollout/Avg÷MEA (%)"]
+                default_fields = ["rollout/success_rate (%)", "rollout/death_rate (%)", "rollout/ep_rew_min",
+                                  "rollout/ep_rew_max", "rollout/Avg÷MEA (%)", "rover/goal_reached(%)",
+                                  "rover/Avg÷MEA(%)", "rover/deaths(%)", "eprewmax", "eprewmin"]
                 fields.sort()
                 for idx, field in enumerate(fields):
                     box_var = tk.IntVar()
@@ -162,7 +163,6 @@ class PlotArea(tk.Frame):
         self.figure.clear()
         self.ax = self.figure.add_subplot(111)
         color = 0
-        xlabel = 'time/total_timesteps'
         smooth_window = int(self.plot_config_area.smooth_size.get())
         selected_fields = []
         for field, box in self.plot_config_area.field_boxes.items():
@@ -170,11 +170,32 @@ class PlotArea(tk.Frame):
                 selected_fields.append(field)
         for file_idx, progress_file_path in enumerate(self.progress_files):
             if len(self.progress_files) > 1:
-                extra_label = progress_file_path.split('/')[-2].split('-')[0] + '/'
+                '''
+                Baselines exps used to have timestamp before exp name. Rover SB3 exps
+                have timestamp after exp name. In both cases, timestamp's fields are
+                separated by -. Thus, except if the exp name has - on it, the first
+                element after a split on - will be a number only in baseline exps.
+                Trying to convert this element to int will result in exception for SB3
+                exps, and this will change a flag for selecting the exp name properly.
+                '''
+                nan = False
+                try:
+                    _ = int(progress_file_path.split('/')[-2].split('-')[0])
+                except:
+                    nan=True
+
+                if nan:
+                    extra_label = progress_file_path.split('/')[-2].split('-')[0] + '/'
+                else:
+                    extra_label = progress_file_path.split('/')[-2].split('-')[-1] + '/'
             else:
                 extra_label = ''
             with open(progress_file_path, 'r') as progress_file:
                 csv_reader = csv.DictReader(progress_file, delimiter=',')
+                if 'misc/total_timesteps' in csv_reader.fieldnames:
+                    xlabel = 'misc/total_timesteps'
+                else:
+                    xlabel = 'time/total_timesteps' 
 
                 fields = list(next(csv_reader).keys())
 
@@ -278,7 +299,6 @@ class PlotArea(tk.Frame):
         title = self.title_field.get()
         xlabel_custom = ''
         ylabel = ''
-        xlabel = 'time/total_timesteps'
 
         yvalues = {f: [] for f in selected_fields}
         legend = []
@@ -286,6 +306,10 @@ class PlotArea(tk.Frame):
         for file_idx, progress_file_path in enumerate(self.progress_files):
             with open(progress_file_path, 'r') as progress_file:
                 csv_reader = csv.DictReader(progress_file, delimiter=',')
+                if 'misc/total_timesteps' in csv_reader.fieldnames:
+                    xlabel = 'misc/total_timesteps'
+                else:
+                    xlabel = 'time/total_timesteps' 
                 xvalues = []
                 progress_file.seek(0)
                 next(csv_reader)
