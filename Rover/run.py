@@ -72,7 +72,7 @@ def main(args):
     rover_env = args.env
     num_environments = args.num_env
     env_kwargs = {"render_mode": "rgb_array", 'gamma': args.gamma, 'start_at_initpos': args.start_at_initpos,
-                  'end_after_current_goal': args.end_after_current_goal, 'random_current_goal': args.random_current_goal}
+                  'end_after_current_goal': not args.dont_end_after_current_goal, 'random_current_goal': not args.dont_random_current_goal}
     env_kwargs.update(extra_args)
     monitor_kwargs = dict(info_keywords=['death', 'goal_reached_flag', 'timeout'], reset_keywords=['current_goal'])
 
@@ -83,10 +83,10 @@ def main(args):
     total_learning_timesteps = int(args.num_timesteps)
     n_steps = args.n_steps  # for each env per update
     seed = args.seed
-    if args.lr_schedule:
-        learning_rate = linear_schedule(args.lr)
-    else:
+    if args.no_lr_schedule:
         learning_rate = args.lr
+    else:
+        learning_rate = linear_schedule(args.lr)
     gamma = args.gamma
     n_epochs = args.n_epochs  # networks training epochs
     gae_lambda = args.gae_lambda
@@ -116,7 +116,7 @@ def main(args):
             if args.networks_architecture == 'RovernetClassic':
                 network_type = "CnnPolicy"
                 policy_kwargs.update({'features_extractor_class': RovernetClassic,
-                                      'share_features_extractor': args.share_features_extractor,
+                                      'share_features_extractor': not args.dont_share_features_extractor,
                                       'normalize_images': args.normalize_images,
                                       'features_extractor_kwargs': {
                                           'img_red_size': args.img_red_size,

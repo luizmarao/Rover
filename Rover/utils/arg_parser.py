@@ -23,7 +23,7 @@ def common_arg_parser():
     parser.add_argument('--conv_layers', help='network\'s mlp layers', default=[(16, 8, 2), (32, 4, 2), (64, 2, 1)])
     parser.add_argument('--num_env', help='Number of environment copies being run in parallel.', default=4, type=int)
     parser.add_argument('--lr', help='Networks\' learning rate', default=0.00005, type=float)
-    parser.add_argument('--lr_schedule', help='Use a linear schedule on the learning rate', default=True, action='store_true')
+    parser.add_argument('--no_lr_schedule', help='Use a linear schedule on the learning rate', default=False, action='store_true')
     parser.add_argument('--use_sde', default=False, action='store_true')
     parser.add_argument('--gamma', type=float, default=0.99),
     parser.add_argument('--gae_lambda', type=float, default=0.95),
@@ -39,10 +39,10 @@ def common_arg_parser():
     parser.add_argument('--features_extractor_class', type=str, default=None)
     parser.add_argument('--features_extractor_lin_layers', type=str, default=None)
     parser.add_argument('--encoder_name', type=str, default=None)
-    parser.add_argument('--share_features_extractor', default=True, action='store_true')
+    parser.add_argument('--dont_share_features_extractor', default=False, action='store_true')
     parser.add_argument('--start_at_initpos', default=False, action='store_true')
-    parser.add_argument('--end_after_current_goal', default=True, action='store_true')
-    parser.add_argument('--random_current_goal', default=True, action='store_true')
+    parser.add_argument('--dont_end_after_current_goal', default=False, action='store_true')
+    parser.add_argument('--dont_random_current_goal', default=False, action='store_true')
     parser.add_argument('--save_images', default=False, action='store_true')
     parser.add_argument('--normalize_images', default=False, action='store_true')
     parser.add_argument('--env_verbose', type=int, default=0),
