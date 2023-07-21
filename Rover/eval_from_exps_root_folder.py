@@ -46,6 +46,8 @@ def main(args):
 
     monitor_kwargs = dict(info_keywords=['death', 'goal_reached_flag', 'timeout'], reset_keywords=['current_goal'])
 
+    if isinstance(eval_args.eval_goals, str):
+        eval_args.eval_goals = eval(eval_args.eval_goals)
 
     goals = eval_args.eval_goals
     num_eval_eps = eval_args.num_eval_eps
@@ -59,6 +61,8 @@ def main(args):
         if os.path.exists(eval_dir):
             eval_dirs.append(eval_dir)
             exps_dirs.append(exp_dir)
+            nets = os.listdir(eval_dir)
+            num_nets += len(nets)
     else:  # might be a root folder for multiple exps
         for content in maybe_exp_list:
             content_path = os.path.join(eval_args.eval_exp_dir, content)
@@ -119,7 +123,7 @@ def main(args):
                 error_loading.append(net)
                 safe_print('Network {} skipped due to loading error.'.format(net))
                 continue
-            results = evaluate_policy(model=model, env=envs, net_num=net_num, n_eval_episodes=num_eval_eps,
+            results = evaluate_policy(model=model, env=envs, net_num=net_num, goals=goals, n_eval_episodes=num_eval_eps,
                                       progress_bar_full=pbar_full)
             for goal in goals:
                 eval_results[goal].append(results[goal])
