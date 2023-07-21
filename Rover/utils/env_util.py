@@ -4,11 +4,11 @@ from typing import Any, Callable, Dict, Optional, Type, Union
 import gymnasium as gym
 from gymnasium.envs.mujoco import MujocoEnv
 from gymnasium.spaces import Space
-
-from Rover.utils.monitor import RoverMonitor
 from stable_baselines3.common.utils import compat_gym_seed
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecEnv
 from stable_baselines3.common.vec_env.patch_gym import _patch_env
+
+from Rover.utils.monitor import RoverMonitor
 
 
 def make_vec_env(
@@ -125,4 +125,3 @@ class RoverMujocoEnv(MujocoEnv):
             camera_name=camera_name,
             default_camera_config=default_camera_config
         )
-
