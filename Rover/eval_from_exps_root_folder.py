@@ -52,7 +52,6 @@ def main(args):
     maybe_exp_list = os.listdir(eval_args.eval_exp_dir)
     eval_dirs = []
     exps_dirs = []
-    eval_networks = {}
     num_nets = 0
     if 'progress.csv' in maybe_exp_list:  # is just one exp folder
         exp_dir = eval_args.eval_exp_dir
@@ -71,7 +70,6 @@ def main(args):
                         eval_dirs.append(eval_dir)
                         exps_dirs.append(exp_dir)
                         nets = os.listdir(eval_dir)
-                        eval_networks[eval_dir] = nets
                         num_nets += len(nets)
     pbar_full = tqdm(desc='Total Evaluation Episodes', total=num_eval_eps * num_nets * len(goals), position=2)
     for idx, exp_dir in enumerate(exps_dirs):
@@ -80,8 +78,9 @@ def main(args):
             safe_print((' '*5+"##### BEGINING EXP {} EVALUATION #####"+' '*5).format(exp_name))
         with open(os.path.join(exp_dir, 'exp_call_args.txt')) as exp_call_file:
             # second line contains the call line, but start with 'python -m Rover.run' and end with '\n'
-            exp_call_line = exp_call_file.readlines()[1][:-2]
-            exp_args = exp_call_line.split(' ')  # separate args keeping format '--arg'
+            exp_call_line = exp_call_file.readlines()[1][20:-2]
+            exp_args = exp_call_line.split('--')[1:]  # separate args
+            exp_args = ['--' + arg.replace(' ', '') for arg in exp_args]
         # ENVIRONMENT PARAMETERS
         exp_args, unknown_exp_args = exp_arg_parser.parse_known_args(exp_args)
         extra_exp_args = parse_cmdline_kwargs(unknown_exp_args)
@@ -96,11 +95,11 @@ def main(args):
         env_kwargs.update(extra_exp_args)
         if rover_env.startswith('Rover4We'):
             env_kwargs.update(
-                {"width": 440, "height": 270, "save_images": args.save_images, "verbose": args.env_verbose,
-                 "img_reduced_size": args.img_red_size})
+                {"width": 440, "height": 270, "save_images": exp_args.save_images, "verbose": exp_args.env_verbose,
+                 "img_reduced_size": exp_args.img_red_size})
             if 'Encoded' in rover_env:  #
-                assert args.encoder_name is not None, 'This environment MUST receive a proper encoder name to work'
-                env_kwargs.update({'encoder_name': args.encoder_name})
+                assert exp_args.encoder_name is not None, 'This environment MUST receive a proper encoder name to work'
+                env_kwargs.update({'encoder_name': exp_args.encoder_name})
 
         # RECREATE THE EXP'S ENV
         envs = make_vec_env(rover_env, env_kwargs=env_kwargs, n_envs=num_environments, monitor_kwargs=monitor_kwargs)
