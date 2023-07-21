@@ -905,7 +905,13 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
         self.random_current_goal = False
         # defines if the episode will end after current_goal is reached
         self.end_after_current_goal = False
-        return 0
+
+    def set_init_configs_g0(self):
+        self.start_at_initpos = True
+        self.force_goal = 0
+        self.random_start = False
+        self.random_current_goal = False
+        self.end_after_current_goal = True
 
     def set_init_configs_g1(self):
         self.start_at_initpos = False
@@ -913,7 +919,6 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
         self.random_start = False
         self.random_current_goal = False
         self.end_after_current_goal = True
-        return 0
 
     def set_init_configs_g2(self):
         self.start_at_initpos = False
@@ -921,7 +926,6 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
         self.random_start = False
         self.random_current_goal = False
         self.end_after_current_goal = True
-        return 0
 
     def get_goal_reached_reward(self):
         return self.goal_rwd
