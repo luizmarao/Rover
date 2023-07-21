@@ -147,6 +147,7 @@ def main(args):
                       seed=seed,
                       clear_ep_info_buffer_every_iteration=clear_ep_info_buffer_every_iteration
                       )
+    model.env_data = {'env_name': rover_env,'env_kwargs': env_kwargs, 'monitor_kwargs': monitor_kwargs}
     rover_rankings = RoverRankingSystem(networks_limit_per_ranking=args.networks_limit_per_ranking,
                                         num_rankings=args.num_rankings, save_path=logger.get_dir(),
                                         networks_subfolder='saved_networks', verbose=0)
