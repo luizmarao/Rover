@@ -79,6 +79,8 @@ def evaluate_policy(
             observations, rewards, dones, infos = env.step(actions)
             current_rewards += rewards
             current_lengths += 1
+            if render:
+                env.render()
             for i in range(n_envs):
                 if episode_counts[i] < episode_count_targets[i]:
                     info = infos[i]
@@ -134,8 +136,5 @@ def evaluate_policy(
                               }
 
         pbar_goal.reset()
-
-        if render:
-            env.render()
 
     return eval_results
