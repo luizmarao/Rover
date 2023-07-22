@@ -41,7 +41,8 @@ def main(args):
     elif not os.path.exists(eval_args.eval_exp_dir):
         return
 
-    os.environ["MUJOCO_GL"] = 'egl'  # Set mujoco rendering to dedicated GPU
+    if not eval_args.play:
+        os.environ["MUJOCO_GL"] = 'egl'  # Set mujoco rendering to dedicated GPU
 
 
     monitor_kwargs = dict(info_keywords=['death', 'goal_reached_flag', 'timeout'], reset_keywords=['current_goal'])
@@ -95,6 +96,8 @@ def main(args):
                           'start_at_initpos': exp_args.start_at_initpos,
                           'end_after_current_goal': not exp_args.dont_end_after_current_goal,
                           'random_current_goal': not exp_args.dont_random_current_goal}
+        if eval_args.play:
+            env_kwargs['render_mode'] = 'human'
         num_environments = exp_args.num_env
         env_kwargs.update(extra_exp_args)
         if rover_env.startswith('Rover4We'):
@@ -124,7 +127,7 @@ def main(args):
                 safe_print('Network {} skipped due to loading error.'.format(net))
                 continue
             results = evaluate_policy(model=model, env=envs, net_num=net_num, goals=goals, n_eval_episodes=num_eval_eps,
-                                      progress_bar_full=pbar_full)
+                                      progress_bar_full=pbar_full, render=eval_args.play)
             for goal in goals:
                 eval_results[goal].append(results[goal])
 
