@@ -7,7 +7,7 @@
 <mujoco model="rover (v0.2)">
 
     <compiler inertiafromgeom="true" angle="degree"/>
-	<option	timestep="0.02" gravity="0 0 -9.81"/>
+	<option	timestep="0.01" gravity="0 0 -9.81"/>
 	
 	<asset>
 		<material name="MatWheel" specular="1" rgba=".1 .1 .1 1"/>

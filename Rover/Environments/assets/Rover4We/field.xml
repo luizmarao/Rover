@@ -6,7 +6,7 @@
 ====================================================== -->
 <mujoco model="field (v2.0)">
     <compiler inertiafromgeom="true" angle="degree"/>
-	<option	timestep="0.02" gravity="0 0 -9.81"/>
+	<option	timestep="0.01" gravity="0 0 -9.81"/>
 	
 	<asset>
 		<!--texture type ="2d" name="PixelGround" file="texture3_field.png"/-->

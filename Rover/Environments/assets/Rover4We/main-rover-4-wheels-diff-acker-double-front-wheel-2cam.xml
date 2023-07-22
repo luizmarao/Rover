@@ -5,7 +5,7 @@
 	Version		:: 0.1
 ====================================================== -->
 <mujoco model="field (v0.1)">
-	<option	timestep="0.02" gravity="0 0 -9.81"/>
+	<option	timestep="0.01" gravity="0 0 -9.81"/>
 
 	<include file="rover-4-wheels-diff-acker-double-front-wheel-2cam.xml"/>
 	
