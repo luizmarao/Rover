@@ -2,12 +2,12 @@ from setuptools import setup
 
 setup(
     name='Rover',
-    version='',
-    packages=['Rover', 'Rover.Environments', 'Rover.utils', 'Rover.algos'],
-    url='',
+    version='1.0',
+    packages=['Rover'],
+    url='https://github.com/luizmarao/Rover',
     license='',
     author='Luiz Afonso Marão',
-    author_email='',
+    author_email='luiz.marao@gmail.com',
     description='',
     install_requires=[
         'gymnasium==0.28.1',
@@ -21,6 +21,7 @@ setup(
         'tqdm==4.65.0',
         'imageio==2.27.0',
         'imageio-ffmpeg==0.4.8',
-        'rich==13.3.3'
+        'rich==13.3.3',
+        'onnx2torch==1.5.8'
     ],
 )
