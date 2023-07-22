@@ -62,6 +62,7 @@ def eval_only_arg_parser():
     parser.add_argument('--eval_goals', default=[-1, 1, 2])
     parser.add_argument('--num_eval_eps', type=int, default=200)
     parser.add_argument('--eval_exp_dir', type=str, default=None)
+    parser.add_argument('--play', default=False, action='store_true')
     return parser
 
 def parse_unknown_args(args):
