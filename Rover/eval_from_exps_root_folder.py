@@ -62,8 +62,8 @@ def main(args):
         if os.path.exists(eval_dir):
             eval_dirs.append(eval_dir)
             exps_dirs.append(exp_dir)
-            nets = os.listdir(eval_dir)
-            num_nets += len(nets)
+            nets = [1 if net.endswith('.zip') else 0 for net in os.listdir(eval_dir)]
+            num_nets += sum(nets)
     else:  # might be a root folder for multiple exps
         for content in maybe_exp_list:
             content_path = os.path.join(eval_args.eval_exp_dir, content)
@@ -74,8 +74,8 @@ def main(args):
                     if os.path.exists(eval_dir):
                         eval_dirs.append(eval_dir)
                         exps_dirs.append(exp_dir)
-                        nets = os.listdir(eval_dir)
-                        num_nets += len(nets)
+                        nets = [1 if net.endswith('.zip') else 0 for net in os.listdir(eval_dir)]
+                        num_nets += sum(nets)
     pbar_full = tqdm(desc='Total Evaluation Episodes', total=num_eval_eps * num_nets * len(goals), position=2)
     for idx, exp_dir in enumerate(exps_dirs):
         if len(exps_dirs) > 1:
@@ -118,6 +118,8 @@ def main(args):
             eval_results[goal] = []
         eval_nets_list = os.listdir(eval_dirs[idx])
         for net in eval_nets_list:
+            if not net.endswith('.zip'):
+                continue
             net_path = os.path.join(eval_dirs[idx], net)
             net_num = net.split('.')[0]
             try:
