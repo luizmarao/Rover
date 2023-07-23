@@ -2,6 +2,7 @@ import os
 import sys
 import numpy as np
 from tqdm import tqdm
+from glob import glob
 import csv
 
 from Rover.utils.logger import safe_print
@@ -39,10 +40,13 @@ def main(args):
 
     if eval_args.eval_exp_dir is None:
         return
-    elif not os.path.exists(eval_args.eval_exp_dir):
+    eval_exp_dir = glob(os.path.expanduser(eval_args.eval_exp_dir))
+    assert len(eval_exp_dir) == 1, "more than one folder matches with the patern given in --eval_exp_dir"
+    eval_exp_dir = eval_exp_dir[0]
+    if not os.path.exists(eval_exp_dir):
         return
 
-    eval_exp_dir = os.path.expanduser(eval_args.eval_exp_dir)
+
 
     if not eval_args.play:
         os.environ["MUJOCO_GL"] = 'egl'  # Set mujoco rendering to dedicated GPU
