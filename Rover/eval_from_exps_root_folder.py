@@ -35,11 +35,14 @@ def main(args):
     eval_arg_parser = eval_only_arg_parser()
     eval_args, unknown_eval_args = eval_arg_parser.parse_known_args(args)
     extra_eval_args = parse_cmdline_kwargs(unknown_eval_args)
-    
+
+
     if eval_args.eval_exp_dir is None:
         return
     elif not os.path.exists(eval_args.eval_exp_dir):
         return
+
+    eval_exp_dir = os.path.expanduser(eval_args.eval_exp_dir)
 
     if not eval_args.play:
         os.environ["MUJOCO_GL"] = 'egl'  # Set mujoco rendering to dedicated GPU
@@ -52,13 +55,13 @@ def main(args):
 
     goals = eval_args.eval_goals
     num_eval_eps = eval_args.num_eval_eps
-    maybe_exp_list = os.listdir(eval_args.eval_exp_dir)
+    maybe_exp_list = os.listdir(eval_exp_dir)
     eval_dirs = []
     exps_dirs = []
     num_nets = 0
     if 'progress.csv' in maybe_exp_list:  # is just one exp folder
-        exp_dir = eval_args.eval_exp_dir
-        eval_dir = os.path.join(eval_args.eval_exp_dir, 'saved_networks')
+        exp_dir = eval_exp_dir
+        eval_dir = os.path.join(eval_exp_dir, 'saved_networks')
         if os.path.exists(eval_dir):
             eval_dirs.append(eval_dir)
             exps_dirs.append(exp_dir)
@@ -66,7 +69,7 @@ def main(args):
             num_nets += sum(nets)
     else:  # might be a root folder for multiple exps
         for content in maybe_exp_list:
-            content_path = os.path.join(eval_args.eval_exp_dir, content)
+            content_path = os.path.join(eval_exp_dir, content)
             if os.path.isdir(content_path):
                 if 'progress.csv' in os.listdir(content_path):  # Is an Exp Folder, search for saved data
                     exp_dir = content_path
