@@ -1004,3 +1004,215 @@ class RoverRobotrek4Wev2RedObsEnv(RoverRobotrek4Wev2Env):
     def _get_obs(self):
         gps_exact, ob, img = super()._get_obs()
         return gps_exact, ob[:-3], img
+
+class RoverRobotrek4Wev2EnvGen(RoverRobotrek4Wev2Env):
+    assets_path = os.path.join(os.path.dirname(__file__), 'assets', 'Rover4We')
+    rover_model_file_name = "rover-4-wheels-diff-acker-double-front-wheel.xml"
+    model_string = None
+    def __init__(
+            self,
+            use_ramps: bool = True,
+            use_posts: bool = True,
+            vectorized_obs: bool = True,
+            flip_penalising: bool = True,
+            flipped_time: float = 2.0,
+            death_circle_penalising: bool = True,
+            death_circ_dist: float = 0.8,
+            death_circ_time: float = 8,
+            fwd_rew: float = 0.1,
+            control_cost: float = 0.0007,
+            svv_rew: float = 0.0,
+            time_pnlt: float = 0.00012,
+            leave_penalty: float = 10,
+            circle_pnlt: float = 10,
+            flip_pnlt: float = 10,
+            goal_rwd: float = 10,
+            sensors_error: float = 0.00,
+            im_size: Tuple[int] = (440, 270),
+            img_reduced_size: Tuple[int] = (32, 32),
+            start_at_initpos: bool = False,
+            force_goal: int = -1,
+            random_start: bool = False,
+            random_current_goal: bool = True,
+            avoid_radius: float = 0.5,
+            gamma: float = 0.99,
+            end_after_current_goal: bool = True,
+            save_images: bool = False,
+            verbose: int = 0,
+            **kwargs
+    ):
+        self.use_ramps = use_ramps
+        self.use_posts = use_posts
+        self.vectorized_obs = vectorized_obs
+        self.flip_penalising = flip_penalising
+        self.flipped_time = flipped_time
+        self.death_circle_penalising = death_circle_penalising
+        self.death_circ_dist = death_circ_dist
+        self.death_circ_time = death_circ_time
+        self.fwd_rew = fwd_rew
+        self.control_cost = control_cost
+        self.svv_rew = svv_rew
+        self.time_pnlt = time_pnlt
+        self.leave_penalty = leave_penalty
+        self.circle_pnlt = circle_pnlt
+        self.flip_pnlt = flip_pnlt
+        self.goal_rwd = goal_rwd
+        self.sensors_error = sensors_error
+        self.im_size = im_size
+        self.img_reduced_size = img_reduced_size
+        self.start_at_initpos = start_at_initpos
+        self.force_goal = force_goal
+        self.random_start = random_start
+        self.random_current_goal = random_current_goal
+        self.avoid_radius = avoid_radius
+        self.gamma = gamma
+        self.end_after_current_goal = end_after_current_goal
+        self.save_images = save_images
+        self.verbose = verbose
+
+        import os
+        os.chdir(self.assets_path)
+
+        self._initialize_map_elems()
+        self.observation_space = self.make_env_observation_space()
+        self.width = 440
+        self.height = 270
+        self._initialize_simulation()  # may use width and height
+
+        self.init_qpos = self.data.qpos.ravel().copy()
+        self.init_qvel = self.data.qvel.ravel().copy()
+
+        self.frame_skip = 4
+
+        assert self.metadata["render_modes"] == [
+            "human",
+            "rgb_array",
+            "depth_array",
+        ], self.metadata["render_modes"]
+        assert (
+                int(np.round(1.0 / self.dt)) == self.metadata["render_fps"]
+        ), f'Expected value: {int(np.round(1.0 / self.dt))}, Actual value: {self.metadata["render_fps"]}'
+
+        self._set_action_space()
+
+        self.render_mode = kwargs['render_mode']
+        self.camera_name = None
+        self.camera_id = None
+        self.env_config()
+
+    def map_reset(self):
+        pass
+
+    def map_generator(self):
+        pass
+
+    def _initialize_simulation(self):
+        model_linesA = (self.start_model_lines +
+                        self.assets_lines +
+                        self.rover_model_lines +
+                        self.start_field_line +
+                        self.ground_config_A +
+                        self.camera_light_lines +
+                        self.platform_lines +
+                        self.end_field_line +
+                        self.end_model_line
+                        )
+        model_linesB = (self.start_model_lines +
+                        self.assets_lines +
+                        self.rover_model_lines +
+                        self.start_field_line +
+                        self.ground_config_B +
+                        self.camera_light_lines +
+                        self.platform_lines +
+                        self.end_field_line +
+                        self.end_model_line
+                        )
+        try:
+            del self.model
+        except:
+            pass
+        if self.model_string is None:
+            self.model = mujoco.MjModel.from_xml_string(model_linesA)
+            self.model_string = 'A'
+        else:
+            self.model = mujoco.MjModel.from_xml_string(model_linesB)
+            self.model_string = None
+        # MjrContext will copy model.vis.global_.off* to con.off*
+        self.model.vis.global_.offwidth = self.width
+        self.model.vis.global_.offheight = self.height
+        self.data = mujoco.MjData(self.model)
+        from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
+        try:
+            old_renderer = self.mujoco_renderer
+        except:
+            pass
+        self.mujoco_renderer = MujocoRenderer(
+            self.model, self.data, default_cam_config=None
+        )
+        try:
+            old_renderer.close()
+            del old_renderer
+        except:
+            pass
+
+    def reinit(self):
+        self._initialize_simulation()
+
+    def _initialize_map_elems(self):
+        rover_path = os.path.join(self.assets_path, self.rover_model_file_name)
+        ramps_path = os.path.join(self.assets_path, 'ramp.xml')
+        posts_path = os.path.join(self.assets_path, 'post.xml')
+        with open(rover_path) as rover_model:
+            self.rover_model_lines = rover_model.read()
+
+        rover_start_model = self.rover_model_lines.find('<asset>') - len('<asset>')
+        rover_end_model = self.rover_model_lines.find('</equality>') + len('</equality>')
+        self.rover_model_lines = self.rover_model_lines[rover_start_model:rover_end_model]
+        with open(ramps_path) as ramps:
+            self.ramps_lines = ramps.read()
+        with open(posts_path) as post:
+            self.posts_lines = post.read()
+        self.camera_light_lines = "<camera name=\"overview\" mode=\"fixed\" pos=\"22 12.5 35\"/>\n<light directional=\"true\" cutoff=\"4\" exponent=\"20\" diffuse=\"1 1 1\" specular=\"0 0 0\" pos=\"0 .3 2.5\" dir=\"0 -.3 -2.5 \"/>\n"
+        self.start_model_lines = "<mujoco model=\"field (v0.1)\">\n<option timestep=\"0.01\" gravity=\"0 0 -9.81\"/>\n"
+        self.end_model_line = "</mujoco>"
+        self.start_field_line = "<worldbody>"
+        self.end_field_line = "</worldbody>"
+        self.box_tile_lines = "<body name=\"box-tile{}\" pos=\"5 5 -10\">\n<geom type=\"box\" size=\".5 .5 .1\" pos = \"0 0 -.1\" rgba=\"0 1 0 1\" />\n</body>"
+        self.circ_bump_lines = "<body name=\"circ-bump{}\" pos=\"5 5 -10\">\n<geom type=\"ellipsoid\" pos=\"0 0 -.075\" size=\".5 .5 .15\" rgba=\"1 0 0 1\"/>\n<geom type=\"box\" size=\".5 .5 .1\" pos = \"0 0 -.1\" rgba=\"0 1 0 1\"/>\n</body>"
+        self.long_bump_lines = "<body name=\"long-bump{}\" pos=\"7 7 -10\">\n<geom type=\"cylinder\" pos=\".5 0 -.95\" size=\"1 1\" axisangle=\"0 1 0 90\" rgba=\"1 1 0 1\"/>\n<geom type=\"box\" pos=\".5 0 -.5\" size=\"1 .5 .5\" rgba=\"0 1 0 1\"/>\n</body>"
+        self.square_hole_lines = "<body name=\"square-hole1\" pos=\"3 .5 -10\">\n<geom type=\"mesh\" mesh=\"part_x+1\" rgba=\".259 .145 .094 1\"/>\n<geom type=\"mesh\" mesh=\"part_x+2\" rgba=\".259 .145 .094 1\"/>\n<geom type=\"mesh\" mesh=\"part_y+1\" rgba=\".259 .145 .094 1\"/>\n<geom type=\"mesh\" mesh=\"part_y+2\" rgba=\".259 .145 .094 1\"/>\n<geom type=\"mesh\" mesh=\"part_x-1\" rgba=\".259 .145 .094 1\"/>\n<geom type=\"mesh\" mesh=\"part_x-2\" rgba=\".259 .145 .094 1\"/>\n<geom type=\"mesh\" mesh=\"part_y-1\" rgba=\".259 .145 .094 1\"/>\n<geom type=\"mesh\" mesh=\"part_y-2\" rgba=\".259 .145 .094 1\"/>\n<geom type=\"mesh\" mesh=\"part_center\" rgba=\".259 .145 .094 1\"/>\n</body>"
+        self.square_long_hole_lines = "<body name=\"square-long-hole1\" pos=\"6 5.5 -10\">\n<geom type=\"mesh\" mesh=\"part_long_x+1\" pos=\".5 0 0\" axisangle=\"0 0 1 90\" rgba=\"0 0 .9 1\"/>\n<geom type=\"mesh\" mesh=\"part_long_x+2\" pos=\".5 0 0\" axisangle=\"0 0 1 90\" rgba=\"0 0 .9 1\"/>\n<geom type=\"mesh\" mesh=\"part_long_x-1\" pos=\".5 0 0\" axisangle=\"0 0 1 90\" rgba=\"0 0 .9 1\"/>\n<geom type=\"mesh\" mesh=\"part_long_x-2\" pos=\".5 0 0\" axisangle=\"0 0 1 90\" rgba=\"0 0 .9 1\"/>\n<geom type=\"mesh\" mesh=\"part_long_center\" pos=\".5 0 0\" axisangle=\"0 0 1 90\" rgba=\"0 0 .9 1\"/>\n</body>"
+
+        self.platform_lines = "<geom name=\"init\" type=\"plane\" pos=\"3 3 .001\" size=\".5 .5 .1\" conaffinity=\"0\" contype=\"0\" material=\"MatInit\"/>\n<geom name=\"spot-0\" type=\"box\" pos=\"6 18 .001\" size=\".5 .5 .001\" material=\"MatSpot\"/>\n<geom name=\"spot-1\" type=\"box\" pos=\"30 2 .001\" size=\".5 .5 .001\" material=\"MatSpot\"/>\n<geom name=\"spot-2\" type=\"box\" pos=\"40 20 .001\" size=\".5 .5 .001\" material=\"MatSpot\"/>\n"
+        self.assets_lines = "<asset>\n<material name=\"MatGnd\" specular=\"1\" shininess=\".3\" reflectance=\"0\" rgba=\"0 1 0 1\" />\n<material name=\"MatSpot\" specular=\"1\" shininess=\"0\" reflectance=\"0.5\" rgba=\"1 1 1 1\"/>\n<material name=\"MatInit\" rgba=\"0.8 0 0 1\"/>\n<mesh name=\"part_long_x+1\" file=\"square_long_hole_x+1.stl\" scale=\".5 1 .65\"/>\n<mesh name=\"part_long_x+2\" file=\"square_long_hole_x+2.stl\" scale=\".5 1 .65\"/>\n<mesh name=\"part_long_x-1\" file=\"square_long_hole_x-1.stl\" scale=\".5 1 .65\"/>\n<mesh name=\"part_long_x-2\" file=\"square_long_hole_x-2.stl\" scale=\".5 1 .65\"/>\n<mesh name=\"part_long_center\" file=\"square_long_hole_center.stl\" scale=\".5 1 .65\"/>\n<mesh name=\"part_x+1\" file=\"square_hole_x+1.stl\" scale=\".5 .5 .65\"/>\n<mesh name=\"part_x+2\" file=\"square_hole_x+2.stl\" scale=\".5 .5 .65\"/>\n<mesh name=\"part_y+1\" file=\"square_hole_y+1.stl\" scale=\".5 .5 .65\"/>\n<mesh name=\"part_y+2\" file=\"square_hole_y+2.stl\" scale=\".5 .5 .65\"/>\n<mesh name=\"part_x-1\" file=\"square_hole_x-1.stl\" scale=\".5 .5 .65\"/>\n<mesh name=\"part_x-2\" file=\"square_hole_x-2.stl\" scale=\".5 .5 .65\"/>\n<mesh name=\"part_y-1\" file=\"square_hole_y-1.stl\" scale=\".5 .5 .65\"/>\n<mesh name=\"part_y-2\" file=\"square_hole_y-2.stl\" scale=\".5 .5 .65\"/>\n<mesh name=\"part_center\" file=\"square_hole_center.stl\" scale=\".5 .5 .65\"/>\n</asset>"
+
+        ground_positions = ["5.5 2.5 -.5",
+                            "5.5 7.5 -.5",
+                            "5.5 12.5 -.5",
+                            "5.5 17.5 -.5",
+                            "5.5 22.5 -.5",
+                            "16.5 2.5 -.5",
+                            "16.5 7.5 -.5",
+                            "16.5 17.5 -.5",
+                            "16.5 22.5 -.5",
+                            "27.5 2.5 -.5",
+                            "27.5 12.5 -.5",
+                            "27.5 22.5 -.5",
+                            "38.5 2.5 -.5",
+                            "38.5 7.5 -.5",
+                            "38.5 17.5 -.5",
+                            "38.5 22.5 -.5"]
+
+        ground_pos_A = ["16.5 12.5 -.5", "38.5 12.5 -.5"] + ground_positions
+        ground_pos_B = ["27.5 7.5 -.5", "27.5 17.5 -.5"] + ground_positions
+        ground_pos_A.sort()
+        ground_pos_B.sort()
+        ground_block_line = "<geom name=\"ground{}\" type=\"box\" pos=\"{}\" size=\"5.5 2.5 .5\" material=\"MatGnd\"/>\n"
+        ground_config_A = ""
+        ground_config_B = ""
+        for idx in range(len(ground_pos_A)):
+            ground_config_A += ground_block_line.format(idx, ground_pos_A[idx])
+            ground_config_B += ground_block_line.format(idx, ground_pos_B[idx])
+
+        self.ground_config_A = ground_config_A
+        self.ground_config_B = ground_config_B
