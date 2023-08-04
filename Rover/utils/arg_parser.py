@@ -7,8 +7,13 @@ def arg_parser():
 
 def common_arg_parser():
     """
-    Create an argparse.ArgumentParser for run_mujoco.py.
+    Create an argparse.ArgumentParser for run.py.
     """
+
+    def none_or_float(value):
+        if value == 'None':
+            return None
+        return value
     parser = arg_parser()
     parser.add_argument('--env', help='environment ID', type=str, default='Rover4We-v2')
     parser.add_argument('--seed', help='RNG seed', type=int, default=None)
@@ -29,7 +34,7 @@ def common_arg_parser():
     parser.add_argument('--gae_lambda', type=float, default=0.95),
     parser.add_argument('--clip_range', type=float, default=0.08),
     parser.add_argument('--ent_coef', type=float, default=0.1),
-    parser.add_argument('--max_grad_norm', type=float, default=0.5),
+    parser.add_argument('--max_grad_norm', type=none_or_float, default=0.5),
     parser.add_argument('--target_kl', type=float, default=0.08),
     parser.add_argument('--networks_limit_per_ranking', type=int, default=5),
     parser.add_argument('--num_rankings', type=int, default=3),
@@ -56,13 +61,24 @@ def common_arg_parser():
 
 def eval_only_arg_parser():
     """
-    Create an argparse.ArgumentParser for run_mujoco.py.
+    Create an argparse.ArgumentParser for run.py.
     """
     parser = arg_parser()
     parser.add_argument('--eval_goals', default=[-1, 1, 2])
     parser.add_argument('--num_eval_eps', type=int, default=200)
     parser.add_argument('--eval_exp_dir', type=str, default=None)
     parser.add_argument('--play', default=False, action='store_true')
+    return parser
+
+def play_only_arg_parser():
+    """
+    Create an argparse.ArgumentParser for run.py.
+    """
+    parser = arg_parser()
+    parser.add_argument('--play_goals', default=[-1, 1, 2])
+    parser.add_argument('--num_play_eps', help='If -1, play indefinitely (Thus, only one goal and agent will run)'
+                        , type=int, default=200)
+    parser.add_argument('--play_path', type=str, default=None)
     return parser
 
 def parse_unknown_args(args):
