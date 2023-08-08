@@ -45,6 +45,7 @@ def common_arg_parser():
     parser.add_argument('--features_extractor_lin_layers', type=str, default=None)
     parser.add_argument('--encoder_name', type=str, default=None)
     parser.add_argument('--dont_share_features_extractor', default=False, action='store_true')
+    parser.add_argument('--dont_normalize_advantages', default=False, action='store_true')
     parser.add_argument('--start_at_initpos', default=False, action='store_true')
     parser.add_argument('--dont_end_after_current_goal', default=False, action='store_true')
     parser.add_argument('--dont_random_current_goal', default=False, action='store_true')
