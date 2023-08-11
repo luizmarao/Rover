@@ -59,6 +59,11 @@ def main(args):
 
     goals = eval_args.eval_goals
     num_eval_eps = eval_args.num_eval_eps
+    deterministic = not eval_args.non_deterministic
+    if deterministic:
+        print("Evaluating in deterministic mode")
+    if not deterministic:
+        print("Evaluating in non deterministic mode")
     maybe_exp_list = os.listdir(eval_exp_dir)
     eval_dirs = []
     exps_dirs = []
