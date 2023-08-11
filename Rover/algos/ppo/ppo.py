@@ -188,17 +188,19 @@ class PPO_Rover(PPO):
                 clip_fraction = th.mean((th.abs(ratio - 1) > clip_range).float()).item()
                 clip_fractions.append(clip_fraction)
 
-                if self.clip_range_vf is None:
-                    # No clipping
-                    values_pred = values
-                else:
-                    # Clip the difference between old and new value
+                values_pred = values
+                value_loss = F.mse_loss(rollout_data.returns, values_pred)
+
+                if self.clip_range_vf is not None:
                     # NOTE: this depends on the reward scaling
-                    values_pred = rollout_data.old_values + th.clamp(
+                    values_pred_clipped = rollout_data.old_values + th.clamp(
                         values - rollout_data.old_values, -clip_range_vf, clip_range_vf
                     )
+                    value_loss_clipped = F.mse_loss(rollout_data.returns, values_pred_clipped)
+                    value_loss = th.maximum(value_loss, value_loss_clipped)
+
                 # Value loss using the TD(gae_lambda) target
-                value_loss = F.mse_loss(rollout_data.returns, values_pred)
+
                 value_losses.append(value_loss.item())
 
                 # Entropy loss favor exploration

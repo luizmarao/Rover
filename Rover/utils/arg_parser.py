@@ -33,6 +33,7 @@ def common_arg_parser():
     parser.add_argument('--gamma', type=float, default=0.99),
     parser.add_argument('--gae_lambda', type=float, default=0.95),
     parser.add_argument('--clip_range', type=float, default=0.08),
+    parser.add_argument('--clip_range_vf', type=float, default=0.08),
     parser.add_argument('--ent_coef', type=float, default=0.1),
     parser.add_argument('--max_grad_norm', type=none_or_float, default=0.5),
     parser.add_argument('--target_kl', type=float, default=0.08),

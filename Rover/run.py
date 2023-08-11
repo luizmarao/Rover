@@ -93,6 +93,7 @@ def main(args):
     assert args.batch_size <= n_steps * num_environments, "batch_size must not exceed n_steps * num_environments!"
     batch_size = args.batch_size  # was 64 in default algo
     clip_range = args.clip_range
+    clip_range_vf = args.clip_range_vf
     normalize_advantage = not args.dont_normalize_advantages
     ent_coef = args.ent_coef
     max_grad_norm = args.max_grad_norm
@@ -139,6 +140,7 @@ def main(args):
                       gae_lambda=gae_lambda,
                       batch_size=batch_size,
                       clip_range=clip_range,
+                      clip_range_vf=clip_range_vf,
                       normalize_advantage=normalize_advantage,
                       ent_coef=ent_coef,
                       max_grad_norm=max_grad_norm,
