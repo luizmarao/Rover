@@ -136,7 +136,7 @@ def main(args):
                 safe_print('Network {} skipped due to loading error.'.format(net))
                 continue
             results = evaluate_policy(model=model, env=envs, net_num=net_num, goals=goals, n_eval_episodes=num_eval_eps,
-                                      progress_bar_full=pbar_full, render=eval_args.play)
+                                      progress_bar_full=pbar_full, render=eval_args.play, deterministic=deterministic)
             for goal in goals:
                 eval_results[goal].append(results[goal])
 
