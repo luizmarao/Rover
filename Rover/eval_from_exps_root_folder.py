@@ -118,6 +118,10 @@ def main(args):
                  "img_reduced_size": exp_args.img_red_size})
             if 'Encoded' in rover_env:  #
                 assert exp_args.encoder_name is not None, 'This environment MUST receive a proper encoder name to work'
+                try:
+                    exp_args.encoder_name = exp_args.encoder_name[0:2]+' '+exp_args.encoder_name[2:]  # Fix space removal from args loading
+                except:
+                    print('Problem loading given encoder name')
                 env_kwargs.update({'encoder_name': exp_args.encoder_name})
 
         # RECREATE THE EXP'S ENV
