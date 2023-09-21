@@ -73,6 +73,16 @@ def eval_only_arg_parser():
     parser.add_argument('--play', default=False, action='store_true')
     return parser
 
+def retrain_arg_parser():
+    """
+    Create an argparse.ArgumentParser for run.py.
+    """
+    import os
+    parser = arg_parser()
+    parser.add_argument('--exp_root_folder', default=os.getcwd(), type=str)
+    parser.add_argument('--num_timesteps', help='total learning steps', type=int, default=1e7),
+    return parser
+
 def play_only_arg_parser():
     """
     Create an argparse.ArgumentParser for run.py.
