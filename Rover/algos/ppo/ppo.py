@@ -340,6 +340,8 @@ class PPO_Rover(PPO):
             if self.clear_ep_info_buffer_every_iteration:
                 self.ep_info_buffer.clear()
         callback.on_training_end()
+        self.save(os.path.join(self.rover_rankings.save_path, self.rover_rankings.networks_subfolder,
+                               '%.5i' % iteration), exclude=None)
 
         return self
 
