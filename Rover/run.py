@@ -58,6 +58,8 @@ def main(args):
         args.conv_layers = eval(args.conv_layers)
     if isinstance(args.net_arch, str):
         args.net_arch = eval(args.net_arch)
+    if isinstance(args.features_extractor_lin_layers, str):
+        args.features_extractor_lin_layers = eval(args.features_extractor_lin_layers)
 
     os.environ["MUJOCO_GL"] = 'egl'  # Set mujoco rendering to dedicated GPU
     EXPERIMENT_NAME = args.exp_name  # ns=num steps, bs=batch size, e=epochs, gr=goal_rwd
@@ -147,9 +149,9 @@ def main(args):
                       use_sde=use_sde,
                       target_kl=target_kl,
                       seed=seed,
-                      clear_ep_info_buffer_every_iteration=clear_ep_info_buffer_every_iteration
+                      clear_ep_info_buffer_every_iteration=clear_ep_info_buffer_every_iteration,
                       )
-    model.env_data = {'env_name': rover_env,'env_kwargs': env_kwargs, 'monitor_kwargs': monitor_kwargs}
+    model.env_data = {'env_name': rover_env, 'env_kwargs': env_kwargs, 'monitor_kwargs': monitor_kwargs}
     rover_rankings = RoverRankingSystem(networks_limit_per_ranking=args.networks_limit_per_ranking,
                                         num_rankings=args.num_rankings, save_path=logger.get_dir(),
                                         networks_subfolder='saved_networks', verbose=0)
@@ -158,7 +160,6 @@ def main(args):
     exp_call_file_write(logger.get_dir(), args_, args, extra_args)
     model.learn(total_timesteps=total_learning_timesteps, progress_bar=True)
 
-    # model.save(path=os.path.join(logger.get_dir(), "saved_model"), include=None, exclude=None)
 
     if args.play:
         pass
