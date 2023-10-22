@@ -3,6 +3,7 @@ from typing import Any, Callable, Dict, Optional, Type, Union
 
 import gymnasium as gym
 from gymnasium.envs.mujoco import MujocoEnv
+from gymnasium.envs.mujoco.mujoco_env import BaseMujocoEnv
 from gymnasium.spaces import Space
 from stable_baselines3.common.utils import compat_gym_seed
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecEnv
@@ -114,7 +115,8 @@ class RoverMujocoEnv(MujocoEnv):
             default_camera_config: Optional[dict] = None,
             **kwargs
     ):
-        super().__init__(
+        BaseMujocoEnv.__init__(
+            self,
             model_path=model_path,
             frame_skip=frame_skip,
             observation_space=observation_space,
@@ -123,5 +125,10 @@ class RoverMujocoEnv(MujocoEnv):
             height=height,
             camera_id=camera_id,
             camera_name=camera_name,
-            default_camera_config=default_camera_config
+        )
+
+        from Rover.utils.renderer import RoverRenderer
+
+        self.mujoco_renderer = RoverRenderer(
+            self.model, self.data, default_camera_config
         )
