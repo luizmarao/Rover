@@ -29,6 +29,12 @@ def common_arg_parser():
     parser.add_argument('--num_env', help='Number of environment copies being run in parallel.', default=4, type=int)
     parser.add_argument('--lr', help='Networks\' learning rate', default=0.00005, type=float)
     parser.add_argument('--no_lr_schedule', help='Use a linear schedule on the learning rate', default=False, action='store_true')
+    parser.add_argument('--exp_lr_schedule', help='Use a exponential schedule on the learning rate', default=False,
+                        action='store_true')
+    parser.add_argument('--quad_lr_schedule', help='Use a quadratic schedule on the learning rate', default=False,
+                        action='store_true')
+    parser.add_argument('--exp_lr_decay', help='Decay rate of the exponential schedule on the learning rate',
+                        default=0.9995, type=float)
     parser.add_argument('--use_sde', default=False, action='store_true')
     parser.add_argument('--gamma', type=float, default=0.99),
     parser.add_argument('--gae_lambda', type=float, default=0.95),

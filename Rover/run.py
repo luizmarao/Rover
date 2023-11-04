@@ -6,7 +6,7 @@ from Rover.algos.ppo.ppo import PPO_Rover
 from Rover.utils.env_register import register_rover_environments
 from Rover.utils.env_util import make_vec_env
 from Rover.utils.logger import configure
-from Rover.utils.lr_schedulers import linear_schedule
+from Rover.utils.lr_schedulers import linear_schedule, exponential_schedule, quadratic_schedule
 from Rover.utils.networks_ranking import RoverRankingSystem
 from Rover.utils.arg_parser import common_arg_parser, parse_unknown_args
 from Rover.utils.networks import RovernetClassic
@@ -88,7 +88,12 @@ def main(args):
     if args.no_lr_schedule:
         learning_rate = args.lr
     else:
-        learning_rate = linear_schedule(args.lr)
+        if args.exp_lr_schedule:
+            learning_rate = exponential_schedule(args.lr, args.exp_lr_decay, total_learning_timesteps, n_steps)
+        elif args.quad_lr_schedule:
+            learning_rate = quadratic_schedule(args.lr)
+        else:
+            learning_rate = linear_schedule(args.lr)
     gamma = args.gamma
     n_epochs = args.n_epochs  # networks training epochs
     gae_lambda = args.gae_lambda
