@@ -98,6 +98,8 @@ def play_only_arg_parser():
     parser.add_argument('--num_play_eps', help='If -1, play indefinitely (Thus, only one goal and agent will run)'
                         , type=int, default=200)
     parser.add_argument('--play_path', type=str, default=None)
+    parser.add_argument('--export_plot', default=False, action='store_true')
+    parser.add_argument('--device',  type=str, default='auto')
     return parser
 
 def parse_unknown_args(args):
