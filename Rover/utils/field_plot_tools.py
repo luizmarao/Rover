@@ -30,7 +30,7 @@ def draw_band(ax, x, y, err, **kwargs):
     vertices = np.block([[x, xn[::-1]],
                          [y, yn[::-1]]]).T
     codes = np.full(len(vertices), Path.LINETO)
-    codes[0] = codes[len(x)] = Path.MOVETO
+    codes[0] = codes[1] = Path.MOVETO
     path = Path(vertices, codes)
     ax.add_patch(PathPatch(path, **kwargs))
 

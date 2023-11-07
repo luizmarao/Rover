@@ -225,7 +225,7 @@ def main(args):
                                     bgs = envs.env_method('camera_rendering', only_overview=True)
                                     bg = bgs[i][18:-19, 15:-16, :]  # crop image's black borders
                                 generate_field_plots(obs=obs, act=act, net=net_num, env=rover_env, background=bg,
-                                                     goal_mode=goal, savepath=play_exp_dir, show=True)
+                                                     goal_mode=goal, savepath=play_exp_dir, show=False)
                                 obs_to_plot[i].clear()
                                 actions_to_plot[i].clear()
 
