@@ -175,8 +175,8 @@ def main(args):
     # PLAY
     error_loading = []
     for net in nets:
-        obs_to_plot = [[]] * num_environments
-        actions_to_plot = [[]] * num_environments
+        obs_to_plot = [[] for i in range(num_environments)]
+        actions_to_plot = [[] for i in range(num_environments)]
         net_num = net.split('/')[-1].split('.')[0]
         try:
             model = PPO_Rover.load(path=net, device=device)
@@ -226,8 +226,8 @@ def main(args):
                                     bg = bgs[i][18:-19, 15:-16, :]  # crop image's black borders
                                 generate_field_plots(obs=obs, act=act, net=net_num, env=rover_env, background=bg,
                                                      goal_mode=goal, savepath=play_exp_dir, show=True)
-                                obs_to_plot[i] = []
-                                actions_to_plot[i] = []
+                                obs_to_plot[i].clear()
+                                actions_to_plot[i].clear()
 
     if len(error_loading) > 0:
         safe_print('Network(s) {} skipped due to loading error.'.format(', '.join(error_loading)))
