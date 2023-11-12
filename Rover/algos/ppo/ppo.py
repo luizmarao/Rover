@@ -8,6 +8,7 @@ from typing import Iterable
 
 import numpy as np
 import torch as th
+import torch.cuda
 from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common.save_util import recursive_getattr, save_to_zip_file
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
@@ -322,6 +323,7 @@ class PPO_Rover(PPO):
                         self.logger.record("rollout/goal" + str(i) + '_episodes', goal_episodes[i])
                         self.logger.record("rollout/goal" + str(i) + '_reached', goal_reached_episodes[i])
 
+            torch.cuda.empty_cache()
             self.train()
 
             time_elapsed = max((time_after_stepping - self.start_time) / 1e9, sys.float_info.epsilon)
