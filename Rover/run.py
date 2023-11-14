@@ -10,6 +10,7 @@ from Rover.utils.lr_schedulers import linear_schedule, exponential_schedule, qua
 from Rover.utils.networks_ranking import RoverRankingSystem
 from Rover.utils.arg_parser import common_arg_parser, parse_unknown_args
 from Rover.utils.networks import RovernetClassic
+import torch.nn as nn
 
 register_rover_environments()
 
@@ -58,6 +59,10 @@ def main(args):
         args.conv_layers = eval(args.conv_layers)
     if isinstance(args.net_arch, str):
         args.net_arch = eval(args.net_arch)
+    if isinstance(args.activation_fn, str):
+        args.activation_fn = eval(args.activation_fn)
+    if isinstance(args.features_extractor_activation_fn, str):
+        args.features_extractor_activation_fn = eval(args.features_extractor_activation_fn)
     if isinstance(args.features_extractor_lin_layers, str):
         args.features_extractor_lin_layers = eval(args.features_extractor_lin_layers)
 
@@ -126,12 +131,14 @@ def main(args):
                 policy_kwargs.update({'features_extractor_class': RovernetClassic,
                                       'share_features_extractor': not args.dont_share_features_extractor,
                                       'normalize_images': args.normalize_images,
+                                      'activation_fn': args.activation_fn,
                                       'features_extractor_kwargs': {
                                           'img_red_size': args.img_red_size,
                                           'rover_2cam_and_packed_images': rover_2cam_and_packed_images,
                                           'dynamic_obs_size': args.dynamic_obs_size,
                                           'conv_layers': args.conv_layers,
                                           'lin_layers': args.features_extractor_lin_layers,
+                                          'activation_fn': args.features_extractor_activation_fn
                                       }
                                       })
         else:

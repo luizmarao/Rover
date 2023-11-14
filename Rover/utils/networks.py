@@ -15,7 +15,7 @@ class RovernetClassic(BaseFeaturesExtractor):
 
     def __init__(self, observation_space: spaces.Box, features_dim: int = 256, img_red_size=(32,32),
                  rover_2cam_and_packed_images=False, dynamic_obs_size=14, conv_layers=[(16, 8, 2), (32, 4, 2)],
-                 lin_layers=None):
+                 lin_layers=None, activation_fn=nn.ReLU):
         super().__init__(observation_space, features_dim)
         # We assume CxHxW images (channels first)
         # Re-ordering will be done by pre-preprocessing or wrapper
@@ -26,7 +26,7 @@ class RovernetClassic(BaseFeaturesExtractor):
         channels = self.n_input_channels
         for (filters, size, stride) in conv_layers:
             self.cnn.append(nn.Conv2d(channels, filters, kernel_size=size, stride=stride, padding='valid'))
-            self.cnn.append(nn.ReLU())
+            self.cnn.append(activation_fn())
             channels = filters
 
         self.cnn.append(nn.Flatten())

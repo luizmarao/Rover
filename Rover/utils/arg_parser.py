@@ -18,6 +18,8 @@ def common_arg_parser():
     parser.add_argument('--env', help='environment ID', type=str, default='Rover4We-v2')
     parser.add_argument('--seed', help='RNG seed', type=int, default=None)
     parser.add_argument('--alg', help='Algorithm', type=str, default='ppo2')  # Future change might include recurrent PPO
+    parser.add_argument('--activation_fn', help='MLP activation function', type=str, default='nn.Tanh')
+    parser.add_argument('--features_extractor_activation_fn', help='MLP activation function', type=str, default='nn.ReLU')
     parser.add_argument('--exp_name', help='The experiment name to go on the saving folder', type=str, default=None)
     parser.add_argument('--exp_root_folder', help='Directory in which the exp folder will be created to save logs and trained models', default=None, type=str)
     parser.add_argument('--num_timesteps', help='total learning steps', type=int, default=1e7),
