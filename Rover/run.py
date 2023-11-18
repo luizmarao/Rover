@@ -116,6 +116,7 @@ def main(args):
     network_type = "MlpPolicy"
     policy_kwargs = dict(
         net_arch=net_arch,
+        activation_fn=args.activation_fn
     )
     if rover_env.startswith('Rover4WeDoubleCameraPacked'):
         rover_2cam_and_packed_images = True
@@ -131,7 +132,6 @@ def main(args):
                 policy_kwargs.update({'features_extractor_class': RovernetClassic,
                                       'share_features_extractor': not args.dont_share_features_extractor,
                                       'normalize_images': args.normalize_images,
-                                      'activation_fn': args.activation_fn,
                                       'features_extractor_kwargs': {
                                           'img_red_size': args.img_red_size,
                                           'rover_2cam_and_packed_images': rover_2cam_and_packed_images,
