@@ -223,7 +223,7 @@ def main(args):
                                 obs = np.hstack(obs_to_plot[i])
                                 act = np.hstack(actions_to_plot[i])
                                 if not rover_env.startswith('Rover4W-'):  # needs to load background image
-                                    bgs = envs.env_method('camera_rendering', only_overview=True)
+                                    bgs = envs.env_method('get_overviwew_image')
                                     bg = bgs[i][18:-19, 15:-16, :]  # crop image's black borders
                                 generate_field_plots(obs=obs, act=act, net=net_num, env=rover_env, background=bg,
                                                      goal_mode=goal, savepath=play_exp_dir, show=False)
