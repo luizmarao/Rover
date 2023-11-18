@@ -101,6 +101,7 @@ def play_only_arg_parser():
                         , type=int, default=200)
     parser.add_argument('--play_path', type=str, default=None)
     parser.add_argument('--export_plot', default=False, action='store_true')
+    parser.add_argument('--dont_render', default=False, action='store_true')
     parser.add_argument('--device',  type=str, default='auto')
     return parser
 

@@ -213,7 +213,8 @@ def main(args):
                         obs_to_plot[i].append(split_obs[i].T)
                         actions_to_plot[i].append(split_actions[i].T)
                 observations, rewards, dones, infos = envs.step(actions)
-                envs.render()
+                if not play_args.dont_render:
+                    envs.render()
                 for i in range(num_environments):
                     if episode_counts[i] < episode_count_targets[i]:
                         if dones[i]:
