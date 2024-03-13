@@ -40,8 +40,8 @@ def evaluate_policy(
     n_envs = env.num_envs
     eval_results = {}
 
-    pbar_net = tqdm(desc='Current Net Episodes', total=n_eval_episodes * len(goals), position=1)
-    pbar_goal = tqdm(desc='Current Net and Goal', total=n_eval_episodes, position=0)
+    pbar_net = tqdm(desc='Current Net Episodes', total=n_eval_episodes * len(goals), position=1, unit='episodes')
+    pbar_goal = tqdm(desc='Current Net and Goal', total=n_eval_episodes, position=0, unit='episodes')
     pbars_list = [pbar_net, pbar_goal]
     if progress_bar_full is not None:
         pbars_list.append(progress_bar_full)
