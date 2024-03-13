@@ -326,8 +326,8 @@ def main(args):
                         red_img = cv2.resize(imgs_exp[i], exp_args.img_red_size)
                         red_gray_img = cv2.cvtColor(red_img, cv2.COLOR_RGB2GRAY)
                         red_gray_img = cv2.cvtColor(red_gray_img, cv2.COLOR_GRAY2RGB)  # bring back the third channel
-                        fp_imgs_video[i].append(cv2.flip(imgs_exp[i], 0))
-                        fp_red_gray_imgs_video[i].append(cv2.flip(red_gray_img, 0))
+                        fp_imgs_video[i].append(cv2.flip(imgs_exp[i], -1))
+                        fp_red_gray_imgs_video[i].append(cv2.flip(red_gray_img, -1))
                         overview_imgs_video[i].append(overview_imgs_exp[i][18:-19, 15:-16, :])  # crop image's black borders
                         perspective_imgs_video[i].append(perspective_imgs_exp[i][50:-85, 10:-7, :]) # crop image's black borders
                         upperview_imgs_video[i].append(upperview_imgs_exp[i])
