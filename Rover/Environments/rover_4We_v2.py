@@ -307,8 +307,16 @@ class RoverRobotrek4Wev2Env(RoverMujocoEnv, utils.EzPickle):
 
         self.holes = np.zeros((2, 11, 5))
 
-    def get_overviwew_image(self):
+    def get_overview_image(self):
         img = self.mujoco_renderer.render("rgb_array", camera_id=0)
+        return img
+
+    def get_perspective_image(self):
+        img = self.mujoco_renderer.render("rgb_array", camera_name="perspective")
+        return img
+
+    def get_firstperson_image(self):
+        img = self.mujoco_renderer.render("rgb_array", camera_name="first-person")
         return img
 
     def camera_rendering(self, camera_name='first-person', extra_img_name=''):  # TODO: fix path for image saving
