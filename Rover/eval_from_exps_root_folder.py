@@ -88,7 +88,7 @@ def main(args):
                         exps_dirs.append(exp_dir)
                         nets = [1 if net.endswith('.zip') else 0 for net in os.listdir(eval_dir)]
                         num_nets += sum(nets)
-    pbar_full = tqdm(desc='Total Evaluation Episodes', total=num_eval_eps * num_nets * len(goals), position=2)
+    pbar_full = tqdm(desc='Total Evaluation Episodes', total=num_eval_eps * num_nets * len(goals), position=2, unit='episodes')
     for idx, exp_dir in enumerate(exps_dirs):
         if len(exps_dirs) > 1:
             exp_name = exp_dir.split('/')[-1].split('-')[0]
