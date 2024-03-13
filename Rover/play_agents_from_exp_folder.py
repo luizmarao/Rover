@@ -128,30 +128,66 @@ def generate_video(obs, act, net, env, imgs, fps=60, goal_mode=-1, savepath=None
 
         video_path = os.path.join(videos_folder, f"{short_env_name}_{net}_{goal_string}{date_string}.avi")
 
-    max_height = max(imgs['fp'][-1].shape[0], imgs['fprg'][-1].shape[0], imgs['overview'][-1].shape[0])  # height of concatenated images in bottom side
-    v_line = np.zeros((max_height, 5, 3), dtype=int)
-    fprg_resize_width = int(imgs['fprg'][-1].shape[1] * max_height / imgs['fprg'][-1].shape[0])
-    overview_resized_width = int(imgs['overview'][-1].shape[1] * max_height / imgs['overview'][-1].shape[0])
-    max_width = max(imgs['fp'][-1].shape[1] + fprg_resize_width + overview_resized_width + 4 * v_line.shape[1],
-                    imgs['perspective'][-1].shape[1])  # width of the video
-    h_line = np.zeros((5, max_width, 3), dtype=int)
-    perspective_resized_height = int(imgs['perspective'][-1].shape[0] * max_width / imgs['perspective'][-1].shape[1])
-    video_height = perspective_resized_height + max_height + 3 * h_line.shape[0]
+    bottom_height = max(imgs['fp'][-1].shape[0], imgs['fprg'][-1].shape[0], imgs['overview'][-1].shape[0])  # height of concatenated images in bottom side
+    v_line_bottom = np.zeros((bottom_height, 5, 3), dtype=int)
+    fprg_resize_width = int(imgs['fprg'][-1].shape[1] * bottom_height / imgs['fprg'][-1].shape[0])
+    overview_resized_width = int(imgs['overview'][-1].shape[1] * bottom_height / imgs['overview'][-1].shape[0])
+    max_width = max(imgs['fp'][-1].shape[1] + fprg_resize_width + overview_resized_width + v_line_bottom.shape[1],
+                    imgs['perspective'][-1].shape[1] + imgs['upperview'][-1].shape[1] )  # width of the video (subtracted of 3 v_line for bottom images - corrected further)
+    h_line = np.zeros((5, max_width + 3 * v_line_bottom.shape[1], 3), dtype=int)
+    perspective_resized_height = int(
+        imgs['perspective'][-1].shape[0] * 0.5 * max_width / imgs['perspective'][-1].shape[1])
+    upperview_resized_height = int(
+        imgs['upperview'][-1].shape[0] * 0.5 * max_width / imgs['upperview'][-1].shape[1])
 
-    frameSize = (max_width, video_height)
+    video_height = max(perspective_resized_height, upperview_resized_height) + bottom_height + 3 * h_line.shape[0]
+
+    frameSize = (max_width + 3 * v_line_bottom.shape[1], video_height)
 
     out = cv2.VideoWriter(video_path,cv2.VideoWriter_fourcc(*'DIVX'), fps=25, frameSize=frameSize)
     for i in range(len(imgs['fp'])):
         fprg = imgs['fprg'][i]
-        fprg_resized = cv2.resize(fprg, (fprg_resize_width, max_height))
+        fprg_resized = cv2.resize(fprg, (fprg_resize_width, bottom_height))
         overview = imgs['overview'][i]
-        overview_resized = cv2.resize(overview, (overview_resized_width, max_height))
-        first_concat = np.concatenate((v_line, imgs['fp'][i], v_line, fprg_resized, v_line, overview_resized, v_line), axis=1)
+        overview_resized = cv2.resize(overview, (overview_resized_width, bottom_height))
+        bottom_concat = np.concatenate((v_line_bottom, imgs['fp'][i], v_line_bottom, fprg_resized, v_line_bottom, overview_resized, v_line_bottom), axis=1)
         persp = imgs['perspective'][i]
-        persp_resized = cv2.resize(persp, (max_width, perspective_resized_height))
-        second_concat = np.concatenate((h_line, persp_resized, h_line, first_concat, h_line), axis=0)
+        persp_resized = cv2.resize(persp, (max_width // 2, perspective_resized_height))
+        upperview = imgs['upperview'][i]
+        upperview_resized = cv2.resize(upperview, (max_width // 2, upperview_resized_height))
+        height_diff = perspective_resized_height - upperview_resized_height  # fill with black line if needed
+        if height_diff > 0:
+            if height_diff % 2 == 0:
+                upperview_resized = np.concatenate((np.zeros((abs(height_diff) / 2, int(max_width / 2), 3), dtype=int),
+                                                           upperview_resized,
+                                                           np.zeros((abs(height_diff) / 2, int(max_width / 2), 3), dtype=int)),
+                                                          axis=0)
+            else:
+                upperview_resized = np.concatenate((np.zeros((abs(height_diff) // 2 + 1, int(max_width / 2), 3), dtype=int),
+                                                           upperview_resized,
+                                                           np.zeros((abs(height_diff) // 2, int(max_width / 2), 3), dtype=int)),
+                                                          axis=0)
+        elif height_diff < 0:
+            if height_diff % 2 == 0:
+                persp_resized = np.concatenate((np.zeros((abs(height_diff) / 2, int(max_width / 2), 3), dtype=int),
+                                                             persp_resized,
+                                                             np.zeros((abs(height_diff) / 2, int(max_width / 2), 3), dtype=int)),
+                                                            axis=0)
+            else:
+                persp_resized = np.concatenate((np.zeros((abs(height_diff) // 2 + 1, int(max_width / 2), 3), dtype=int),
+                                                             persp_resized,
+                                                             np.zeros((abs(height_diff) // 2, int(max_width / 2), 3), dtype=int)),
+                                                            axis=0)
 
-        out.write(cv2.cvtColor(second_concat.astype(np.uint8), cv2.COLOR_RGB2BGR))
+        v_line_top = np.zeros((max(perspective_resized_height, upperview_resized_height), 5, 3), dtype=int)
+        if bottom_concat.shape[1] == upperview_resized.shape[1] + persp_resized.shape[1] + 3 * v_line_top.shape[1]:
+            top_concat = np.concatenate((v_line_top, upperview_resized, v_line_top, persp_resized, v_line_top), axis=1)
+        else:
+            top_concat = np.concatenate((v_line_top, upperview_resized, v_line_top, persp_resized, v_line_top), axis=1)
+
+        final_concat = np.concatenate((h_line, top_concat, h_line, bottom_concat, h_line), axis=0)
+
+        out.write(cv2.cvtColor(final_concat.astype(np.uint8), cv2.COLOR_RGB2BGR))
 
     out.release()
     time.sleep(1.0)  # to avoid videos with the same timestamp
@@ -245,6 +281,7 @@ def main(args):
         fp_red_gray_imgs_video = [[] for i in range(num_environments)]
         overview_imgs_video = [[] for i in range(num_environments)]
         perspective_imgs_video = [[] for i in range(num_environments)]
+        upperview_imgs_video = [[] for i in range(num_environments)]
         net_num = net.split('/')[-1].split('.')[0]
         try:
             model = PPO_Rover.load(path=net, device=device)
@@ -284,6 +321,7 @@ def main(args):
                     imgs_exp = envs.env_method('get_firstperson_image')
                     overview_imgs_exp = envs.env_method('get_overview_image')
                     perspective_imgs_exp = envs.env_method('get_perspective_image')
+                    upperview_imgs_exp = envs.env_method('get_upperview_image')
                     for i in range(num_environments):
                         red_img = cv2.resize(imgs_exp[i], exp_args.img_red_size)
                         red_gray_img = cv2.cvtColor(red_img, cv2.COLOR_RGB2GRAY)
@@ -292,6 +330,7 @@ def main(args):
                         fp_red_gray_imgs_video[i].append(cv2.flip(red_gray_img, 0))
                         overview_imgs_video[i].append(overview_imgs_exp[i][18:-19, 15:-16, :])  # crop image's black borders
                         perspective_imgs_video[i].append(perspective_imgs_exp[i][50:-85, 10:-7, :]) # crop image's black borders
+                        upperview_imgs_video[i].append(upperview_imgs_exp[i])
                 observations, rewards, dones, infos = envs.step(actions)
                 if not play_args.dont_render:
                     envs.render()
@@ -316,7 +355,8 @@ def main(args):
                                     'fp': fp_imgs_video[i],
                                     'fprg': fp_red_gray_imgs_video[i],
                                     'overview': overview_imgs_video[i],
-                                    'perspective': perspective_imgs_video[i]
+                                    'perspective': perspective_imgs_video[i],
+                                    'upperview': upperview_imgs_video[i]
                                 }
                                 generate_video(obs=obs, act=act, net=net_num, env=rover_env, imgs=imgs, fps=60,
                                                goal_mode=goal, savepath=play_exp_dir)

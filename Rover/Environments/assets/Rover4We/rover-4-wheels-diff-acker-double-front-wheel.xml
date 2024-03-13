@@ -49,6 +49,7 @@
 			<light name="lamp" active="true" directional="true" cutoff="4" exponent="20" diffuse="1 1 1" specular="0 0 0" pos="0 0 2.5" dir="0 0 -1 "/>
 			
 			<camera name="first-person" mode="fixed" pos=".22 0 .08" euler="180 -133 -90" fovy="90"/>
+			<camera name="upper-view" mode="track" pos="-5.5 0 2.0" euler="180 -110 90"/>
 			
 			<geom name="camera-hit-box" type="box" size=".05 .05 .03" pos=".22 0 .08" euler="180 -133 -90" mass="0" rgba="0.3 0 0 0"/>
 			
