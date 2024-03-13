@@ -84,7 +84,8 @@ for exp_path in exps_list:
                 eval_results[goal].append(row)
                 for key in reader.fieldnames:
                     if key == "Network":
-                        eval_results[goal][-1][key] = exp_path.split('/')[-1][0:7] + "/" + eval_results[goal][-1][key]
+                        eval_results[goal][-1][key] = exp_path.split('/')[-1].split('-')[0] + "/" + \
+                                                      eval_results[goal][-1][key]
                     else:
                         eval_results[goal][-1][key] = float(eval_results[goal][-1][key])
 
