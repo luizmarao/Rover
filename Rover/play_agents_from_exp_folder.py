@@ -4,6 +4,7 @@ import time
 
 import numpy as np
 import datetime
+import cv2
 from glob import glob
 from matplotlib import pyplot as plt
 
@@ -90,7 +91,70 @@ def generate_field_plots(obs, act, net, env, background=None, goal_mode=-1, save
                          colorbar_label=bar_labels[1], savepath=plots_paths[1], show=show)
     time.sleep(1.0)  # to avoid plots with the same timestamp
 
+def generate_video(obs, act, net, env, imgs, fps=60, goal_mode=-1, savepath=None):
+    """
+    Generate special plots, with the rover trajectory over the field image as background.
+    The line color changes according to the parameter sent as line_intensity, and a band is drawn around it with
+    another variable.
+    :param obs: [gps_sensor.flat, orientation_rover.flat, ghost_steer_angle, speed_sensor.flat, rover_ang_speed,
+             ghost_steer_angspeed, coordinates_goal.flat, goal.flat]
+    :param act: [steering_motor, acc_motor]
+    :param net: number/name of the network that generated the data
+    :param env: name of the environment where the data was acquired
+    :param background: picture of the field where the simulation occurred
+    :param goal_mode: -1 if full run, or the number of specific goal
+    :param savepath: the experiment's path, or any other where the folder with the images will be created
+    :param show: whether to show or not the plots generated
+    :return:
+    """
 
+    steering_motor = act[0]
+    acc = act[1]
+    x = obs[0]
+    y = obs[1]
+    steering_angle = obs[4]
+    vx = obs[5]
+    vy = obs[6]
+    speed = np.hypot(vx, vy)
+    if savepath is not None:
+        videos_folder = os.path.join(savepath, 'videos')
+        os.makedirs(videos_folder, exist_ok=True)
+        date_string = datetime.datetime.now().strftime("-%Y-%m-%d-%H-%M-%S")
+        short_env_name = env.split('-')[0][5:]
+        if goal_mode == -1:
+            goal_string = 'full_mode'
+        else:
+            goal_string = f"g{goal_mode}_mode"
+
+        video_path = os.path.join(videos_folder, f"{short_env_name}_{net}_{goal_string}{date_string}.avi")
+
+    max_height = max(imgs['fp'][-1].shape[0], imgs['fprg'][-1].shape[0], imgs['overview'][-1].shape[0])  # height of concatenated images in bottom side
+    v_line = np.zeros((max_height, 5, 3), dtype=int)
+    fprg_resize_width = int(imgs['fprg'][-1].shape[1] * max_height / imgs['fprg'][-1].shape[0])
+    overview_resized_width = int(imgs['overview'][-1].shape[1] * max_height / imgs['overview'][-1].shape[0])
+    max_width = max(imgs['fp'][-1].shape[1] + fprg_resize_width + overview_resized_width + 4 * v_line.shape[1],
+                    imgs['perspective'][-1].shape[1])  # width of the video
+    h_line = np.zeros((5, max_width, 3), dtype=int)
+    perspective_resized_height = int(imgs['perspective'][-1].shape[0] * max_width / imgs['perspective'][-1].shape[1])
+    video_height = perspective_resized_height + max_height + 3 * h_line.shape[0]
+
+    frameSize = (max_width, video_height)
+
+    out = cv2.VideoWriter(video_path,cv2.VideoWriter_fourcc(*'DIVX'), fps=25, frameSize=frameSize)
+    for i in range(len(imgs['fp'])):
+        fprg = imgs['fprg'][i]
+        fprg_resized = cv2.resize(fprg, (fprg_resize_width, max_height))
+        overview = imgs['overview'][i]
+        overview_resized = cv2.resize(overview, (overview_resized_width, max_height))
+        first_concat = np.concatenate((v_line, imgs['fp'][i], v_line, fprg_resized, v_line, overview_resized, v_line), axis=1)
+        persp = imgs['perspective'][i]
+        persp_resized = cv2.resize(persp, (max_width, perspective_resized_height))
+        second_concat = np.concatenate((h_line, persp_resized, h_line, first_concat, h_line), axis=0)
+
+        out.write(cv2.cvtColor(second_concat.astype(np.uint8), cv2.COLOR_RGB2BGR))
+
+    out.release()
+    time.sleep(1.0)  # to avoid videos with the same timestamp
 
 def main(args):
     args_ = args
@@ -177,6 +241,10 @@ def main(args):
     for net in nets:
         obs_to_plot = [[] for i in range(num_environments)]
         actions_to_plot = [[] for i in range(num_environments)]
+        fp_imgs_video = [[] for i in range(num_environments)]
+        fp_red_gray_imgs_video = [[] for i in range(num_environments)]
+        overview_imgs_video = [[] for i in range(num_environments)]
+        perspective_imgs_video = [[] for i in range(num_environments)]
         net_num = net.split('/')[-1].split('.')[0]
         try:
             model = PPO_Rover.load(path=net, device=device)
@@ -206,12 +274,24 @@ def main(args):
                                              dtype="int")
             while (episode_counts < episode_count_targets).any():
                 actions, _ = model.predict(observation=observations, deterministic=True)
-                if play_args.export_plot:  # store obs and actions to future plot
+                if play_args.export_plot or play_args.export_video:  # store obs and actions to future plot/video
                     split_obs = np.vsplit(observations[:, 0:14], num_environments)
                     split_actions = np.vsplit(actions, num_environments)
                     for i in range(num_environments):
                         obs_to_plot[i].append(split_obs[i].T)
                         actions_to_plot[i].append(split_actions[i].T)
+                if play_args.export_video and not rover_env.startswith('Rover4W-'):  # store images to future video - don't work with no camera env
+                    imgs_exp = envs.env_method('get_firstperson_image')
+                    overview_imgs_exp = envs.env_method('get_overview_image')
+                    perspective_imgs_exp = envs.env_method('get_perspective_image')
+                    for i in range(num_environments):
+                        red_img = cv2.resize(imgs_exp[i], exp_args.img_red_size)
+                        red_gray_img = cv2.cvtColor(red_img, cv2.COLOR_RGB2GRAY)
+                        red_gray_img = cv2.cvtColor(red_gray_img, cv2.COLOR_GRAY2RGB)  # bring back the third channel
+                        fp_imgs_video[i].append(cv2.flip(imgs_exp[i], 0))
+                        fp_red_gray_imgs_video[i].append(cv2.flip(red_gray_img, 0))
+                        overview_imgs_video[i].append(overview_imgs_exp[i][18:-19, 15:-16, :])  # crop image's black borders
+                        perspective_imgs_video[i].append(perspective_imgs_exp[i][50:-85, 10:-7, :]) # crop image's black borders
                 observations, rewards, dones, infos = envs.step(actions)
                 if not play_args.dont_render:
                     envs.render()
@@ -219,9 +299,10 @@ def main(args):
                     if episode_counts[i] < episode_count_targets[i]:
                         if dones[i]:
                             episode_counts[i] += 1
-                            if play_args.export_plot:  # make the arrays, plot and clean lists
+                            if play_args.export_plot or play_args.export_video:  # make the arrays for plot/video
                                 obs = np.hstack(obs_to_plot[i])
                                 act = np.hstack(actions_to_plot[i])
+                            if play_args.export_plot: # plot and clean lists
                                 if not rover_env.startswith('Rover4W-'):  # needs to load background image
                                     bgs = envs.env_method('get_overviwew_image')
                                     bg = bgs[i][18:-19, 15:-16, :]  # crop image's black borders
@@ -230,6 +311,19 @@ def main(args):
                                 obs_to_plot[i].clear()
                                 actions_to_plot[i].clear()
 
+                            if play_args.export_video and not rover_env.startswith('Rover4W-'):  # render the video and clean lists - don't work with no camera env
+                                imgs = {
+                                    'fp': fp_imgs_video[i],
+                                    'fprg': fp_red_gray_imgs_video[i],
+                                    'overview': overview_imgs_video[i],
+                                    'perspective': perspective_imgs_video[i]
+                                }
+                                generate_video(obs=obs, act=act, net=net_num, env=rover_env, imgs=imgs, fps=60,
+                                               goal_mode=goal, savepath=play_exp_dir)
+                                fp_imgs_video[i].clear()
+                                fp_red_gray_imgs_video[i].clear()
+                                overview_imgs_video[i].clear()
+                                perspective_imgs_video[i].clear()
     if len(error_loading) > 0:
         safe_print('Network(s) {} skipped due to loading error.'.format(', '.join(error_loading)))
     envs.close()
