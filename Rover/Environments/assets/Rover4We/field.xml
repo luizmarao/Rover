@@ -24,6 +24,7 @@
 	
     <worldbody>
 		<camera name="overview" mode="fixed" pos="22 12.5 35"/>
+		<camera name="perspective" mode="fixed" pos="21.750 -21.281 28.031" xyaxes="1.000 -0.000 0.000 0.000 0.707 0.707"/>
 		<light directional="true" cutoff="4" exponent="20" diffuse="1 1 1" specular="0 0 0" pos="0 .3 2.5" dir="0 -.3 -2.5 "/>
 		<geom name="ground1" type="box" pos="5.5 2.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
 		<geom name="ground2" type="box" pos="5.5 7.5 -.5" size="5.5 2.5 .5" material="MatGnd"/>
