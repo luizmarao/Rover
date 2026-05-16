@@ -9,6 +9,7 @@ setup(
     author='Luiz Afonso Marão',
     author_email='luiz.marao@gmail.com',
     description='',
+    python_requires='>=3.8, <3.11', # Tested with 3.10.10
     install_requires=[
         'gymnasium==0.28.1',
         'numpy',
