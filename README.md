@@ -11,7 +11,7 @@ adapted version of Stable-Baselines3 (https://github.com/DLR-RM/stable-baselines
 PPO algorithm.
 
 ## Installation
-The Rover package was tested in Ubuntu 22.04. Thus, it may not be compatible
+The Rover package was tested in Ubuntu 22.04 and python 3.10.10. Thus, it may not be compatible
 with former versions. 
 ### Install using pip
 In your shell, at the desired root folder, run the following commands:
